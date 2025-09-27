@@ -1,4 +1,4 @@
-name: CI Linter
+name: CI Pipeline
 
 on:
   push:
@@ -6,10 +6,14 @@ on:
       - 'main'
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Run linter
+      - name: Run Linter
         run: echo "Linting complete"
+      - name: Install Pytest
+        run: pip install pytest
+      - name: Run Pytest
+        run: pytest builder_operations_playground/tests
