@@ -52,6 +52,11 @@ def main():
         timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         log_entry = f"\n{timestamp} - Mission Alpha: Success. Authenticated and created first file."
 
+        # --- CORRECTED LOGIC ---
+        # Ensure the directory exists before writing the file
+        os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+        # --- END CORRECTION ---
+
         with open(LOG_FILE_PATH, 'a') as f:
             f.write(log_entry)
         print(f"   - Success: Wrote log entry to '{LOG_FILE_PATH}'.")
