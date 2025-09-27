@@ -1,16 +1,17 @@
 import os
-from datetime import datetime
+import datetime
 
-def log_mission_success(mission_name):
+def log_mission_success(mission_name, message):
     """
     Logs a successful mission completion to the learning log.
 
     Args:
         mission_name (str): The name of the mission that was completed.
+        message (str): The message to log.
     """
     log_file_path = "ai-knowledge-base/learning_log.md"
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"{timestamp} - Mission {mission_name}: Success. Implemented centralized logging module as per self-generated plan.\n"
+    timestamp = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    log_entry = f"\n{timestamp} - {mission_name}: Success. {message}"
 
     # Ensure the directory exists
     os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
