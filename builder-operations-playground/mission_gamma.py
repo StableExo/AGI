@@ -1,11 +1,10 @@
 import os
-import datetime
+from utils.logger import log_mission_success
 
 def main():
     # Define file paths
     original_report_path = "builder-operations-playground/status_report.md"
     new_report_path = "builder-operations-playground/system_status.md"
-    log_file_path = "ai-knowledge-base/learning_log.md"
 
     # 1. Rename the status report file
     if os.path.exists(original_report_path):
@@ -25,11 +24,8 @@ Current Directive: Awaiting next."""
     print(f"Updated content of '{new_report_path}'.")
 
     # 3. Log the refactoring
-    timestamp = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
-    log_entry = f"\n{timestamp} - Mission Gamma: Success. Refactored status report file.".replace("+00:00", "Z")
-    with open(log_file_path, "a") as f:
-        f.write(log_entry)
-    print(f"Logged refactoring to '{log_file_path}'.")
+    log_mission_success("Mission Gamma", "Refactored status report file.")
+    print("Logged refactoring to 'ai-knowledge-base/learning_log.md'.")
 
 if __name__ == "__main__":
     main()
