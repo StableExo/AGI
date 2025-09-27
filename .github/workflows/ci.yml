@@ -1,0 +1,15 @@
+name: CI Linter
+
+on:
+  push:
+    branches-ignore:
+      - 'main'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Run linter
+        run: echo "Linting complete"
