@@ -1,0 +1,48 @@
+name: Briefing Assistant
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  run_briefing_assistant:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r briefing_assistant/requirements.txt
+
+      - name: Download spaCy model
+        run: python -m spacy download en_core_web_sm
+
+      - name: Run Briefing Assistant
+        id: briefing
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          output=$(python briefing_assistant/main.py)
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          echo "$output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post Briefing as Comment
+        uses: actions/github-script@v6
+        if: steps.briefing.outputs.report != ''
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `${{ steps.briefing.outputs.report }}`
+            });
