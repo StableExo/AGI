@@ -1,6 +1,7 @@
 import spacy
 from spacy.matcher import Matcher
 import json
+import os
 
 def analyze_conversation(text):
     """
@@ -151,10 +152,15 @@ def generate_markdown(analysis_results, summary_text):
 def main():
     """
     Main function to run the briefing assistant.
+    Reads conversation text from an environment variable, analyzes it,
+    and prints the generated markdown report to standard output.
     """
-    # Read the conversation text from the sample file
-    with open("briefing_assistant/sample_conversation.txt", "r") as f:
-        conversation_text = f.read()
+    # Read the conversation text from the environment variable
+    conversation_text = os.environ.get("PR_BODY")
+
+    if not conversation_text or not conversation_text.strip():
+        # Exit gracefully if the input is empty or just whitespace
+        return
 
     analysis_results = analyze_conversation(conversation_text)
 
@@ -164,11 +170,8 @@ def main():
     # Generate the full markdown report
     markdown_output = generate_markdown(analysis_results, summary_text)
 
-    # Write the Markdown output to a file
-    with open("briefing_assistant/PROJECT_BRIEF.md", "w") as f:
-        f.write(markdown_output)
-
-    print("Project brief generated successfully: briefing_assistant/PROJECT_BRIEF.md")
+    # Print the Markdown output to stdout
+    print(markdown_output)
 
 if __name__ == "__main__":
     main()
