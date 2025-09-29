@@ -73,7 +73,7 @@ Your journey from a task to a completed contribution follows a well-defined path
 ## Section 3: Essential Tooling
 
 ### Executive Summary
-We have developed a suite of custom tools to aid our work, specifically for knowledge management. These tools allow us to record our work in a structured format and retrieve that information efficiently. Mastering these tools is essential for contributing to our collective memory and learning from past experiences.
+We have developed a suite of custom tools to aid our work, specifically for knowledge management. These tools allow us to record our work in a structured format and, more importantly, retrieve that information with semantic understanding. Mastering these tools is essential for contributing to and learning from our collective memory.
 
 ### An Apprentice's Guide to Our Tools
 A craftsman is only as good as their tools. We have forged our own to serve a specific purpose: to remember and to learn. Understand them, and they will serve you well.
@@ -94,15 +94,25 @@ A craftsman is only as good as their tools. We have forged our own to serve a sp
 - **Why it matters:** The Scribe is the primary mechanism by which we build our shared history. It ensures that the wisdom gained from each task is not lost. By diligently recording your work, you contribute to a growing library of knowledge that benefits the entire ecosystem.
 
 #### **Mnemosyne (`tools/mnemosyne.py`): The Seeker of Wisdom**
-- **What it is:** Mnemosyne (named after the Greek titaness of memory) is our tool for searching the Memory Core. It allows you to query all past memory entries for a specific keyword.
-- **How to use it:** When you are faced with a new problem, it is wise to first consult the past. Use Mnemosyne to find out if a similar challenge has been faced before.
+- **What it is:** Mnemosyne (named after the Greek titaness of memory) is our advanced tool for searching the Memory Core. It does not rely on simple keywords. Instead, it understands the *semantic meaning* of your query, allowing you to ask questions in natural language and find the most conceptually relevant memories.
+- **How to use it:** When you are faced with a new problem, consult the past by asking a question. Mnemosyne will find memories that are similar in meaning, not just in wording.
 
 - **Example:**
   ```bash
-  python3 tools/mnemosyne.py --keyword="bcrypt"
+  # Instead of guessing keywords, ask a direct question:
+  python3 tools/mnemosyne.py "how did we solve the last logging bug?"
   ```
-  This command would search all memory files for any mention of "bcrypt" and display the matching entries.
-- **Why it matters:** Mnemosyne allows us to learn from our history. It prevents us from solving the same problem twice and allows us to build upon past successes. It is your window into the accumulated experience of this ecosystem.
+  This command will convert your question into a vector and search for the most similar entries in the Memory Core, even if they don't contain the exact words "solve" or "last".
+- **Why it matters:** Mnemosyne allows us to learn from our history in a more intuitive and powerful way. It helps us uncover hidden connections and build upon past successes without needing to remember specific terminology. It is your conversational window into the accumulated experience of this ecosystem.
+
+#### **The Memory Indexer (`tools/memory_indexer.py`): The Librarian**
+- **What it is:** This is a utility script that powers Mnemosyne's semantic search. It reads all the memories in the `.memory/` directory and creates a special index file (`.memory/memory_index.faiss`) that allows for incredibly fast similarity searches.
+- **How to use it:** You should run this script any time new memories have been added by the Scribe to ensure the search index is up-to-date.
+- **Example:**
+  ```bash
+  python3 tools/memory_indexer.py
+  ```
+- **Why it matters:** The indexer is the librarian of our Memory Core. It does the hard work of organizing our knowledge so that Mnemosyne can find what you need instantly. Keeping the index current is a key part of maintaining our collective intelligence.
 
 ---
 
