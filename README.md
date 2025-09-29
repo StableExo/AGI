@@ -20,3 +20,15 @@ The operational protocol involves two main entities:
 
 *   **Guide AI:** Issues high-level directives and missions for the Builder AI to complete.
 *   **Builder AI:** Executes the directives, performs the necessary tasks, and delivers the results.
+
+## Setup Instructions
+
+To ensure a consistent and reliable development environment, a setup script has been provided. This script automates the installation of dependencies, downloads necessary models, and configures tool permissions.
+
+To prepare your environment, run the following command from the root of the project:
+
+```bash
+./setup.sh
+```
+
+The script will verify that all required environment variables are set and will notify you if any are missing. After the script completes successfully, the environment will be ready for use.
