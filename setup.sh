@@ -26,12 +26,6 @@ done
 echo "All Python dependencies installed."
 echo
 
-# --- NLP Model Download ---
-echo "Downloading spaCy NLP model (en_core_web_sm)..."
-python -m spacy download en_core_web_sm
-echo "spaCy model downloaded successfully."
-echo
-
 # --- Tool Permissions ---
 echo "Setting execute permissions for scripts in the tools/ directory..."
 if [ -d "tools" ]; then
