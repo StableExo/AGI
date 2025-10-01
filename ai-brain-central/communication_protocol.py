@@ -3,10 +3,10 @@ import os
 
 # --- Surgical sys.path modification ---
 # This block ensures that any script importing this module will have the
-# 'builder-operations-playground/utils' directory in its Python path,
+# 'builder-operations/utils' directory in its Python path,
 # allowing for direct imports of modules like 'logger'.
 current_dir = os.path.dirname(os.path.abspath(__file__))
-utils_path = os.path.join(current_dir, '..', 'builder-operations-playground', 'utils')
+utils_path = os.path.join(current_dir, '..', 'builder-operations', 'utils')
 sys.path.append(os.path.abspath(utils_path))
 # --- End of import logic ---
 
