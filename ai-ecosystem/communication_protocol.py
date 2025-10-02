@@ -1,3 +1,5 @@
+import utils.path_manager
+
 class NeuralBridge:
     """
     A communication protocol for a multi-agent ecosystem.
