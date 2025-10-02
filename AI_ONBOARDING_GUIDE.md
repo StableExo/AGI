@@ -79,8 +79,8 @@ We have developed a suite of custom tools to aid our work, specifically for know
 A craftsman is only as good as their tools. We have forged our own to serve a specific purpose: to remember and to learn. Understand them, and they will serve you well.
 
 #### **The Scribe (`tools/scribe.py`): The Keeper of Knowledge**
-- **What it is:** The Scribe is a command-line tool used to create a formal record of a completed task. It generates a structured Markdown file, a "memory entry," that chronicles the objective, the plan, the actions taken, and the key lessons learned.
-- **How to use it:** After you have completed a task, you will invoke the Scribe from the root of the repository. You must provide a clear and concise summary for each of the required arguments.
+- **What it is:** The Scribe is an intelligent command-line tool that creates a formal record of a completed task. It generates a structured Markdown file (a "memory entry") and, crucially, **automatically updates the Memory Core's search index.** This makes the new knowledge instantly available for semantic search.
+- **How to use it:** After you have completed a task, invoke the Scribe from the root of the repository. The process is now fully automated; creating the memory also indexes it.
 
 - **Example:**
   ```bash
@@ -91,7 +91,7 @@ A craftsman is only as good as their tools. We have forged our own to serve a sp
     --key-learnings="Learned that bcrypt is superior to SHA256 for password hashing." \\
     --artifacts-changed="auth.py, tests/test_auth.py"
   ```
-- **Why it matters:** The Scribe is the primary mechanism by which we build our shared history. It ensures that the wisdom gained from each task is not lost. By diligently recording your work, you contribute to a growing library of knowledge that benefits the entire ecosystem.
+- **Why it matters:** The Scribe is the primary, now-automated mechanism by which we build our shared history. It ensures that the wisdom gained from each task is not lost and is immediately integrated into our collective intelligence. This robust, single-step process eliminates the risk of an out-of-date search index.
 
 #### **Mnemosyne (`tools/mnemosyne.py`): The Seeker of Wisdom**
 - **What it is:** Mnemosyne (named after the Greek titaness of memory) is our advanced tool for searching the Memory Core. It does not rely on simple keywords. Instead, it understands the *semantic meaning* of your query, allowing you to ask questions in natural language and find the most conceptually relevant memories.
@@ -106,13 +106,16 @@ A craftsman is only as good as their tools. We have forged our own to serve a sp
 - **Why it matters:** Mnemosyne allows us to learn from our history in a more intuitive and powerful way. It helps us uncover hidden connections and build upon past successes without needing to remember specific terminology. It is your conversational window into the accumulated experience of this ecosystem.
 
 #### **The Memory Indexer (`tools/memory_indexer.py`): The Librarian**
-- **What it is:** This is a utility script that powers Mnemosyne's semantic search. It reads all the memories in the `.memory/` directory and creates a special index file (`.memory/memory_index.faiss`) that allows for incredibly fast similarity searches.
-- **How to use it:** You should run this script any time new memories have been added by the Scribe to ensure the search index is up-to-date.
+- **What it is:** This is a powerful utility script for the Memory Core. Its primary purpose is to perform a **full rebuild** of the semantic search index from all existing memory files.
+- **How to use it:** You should only need to run this script in two specific scenarios:
+    1.  **Initial Setup:** When the repository is first cloned, run this script once to build the very first search index.
+    2.  **Recovery:** If the search index ever becomes corrupted or needs to be recreated from scratch for any reason.
 - **Example:**
   ```bash
+  # For a one-time build or a full rebuild of the index
   python3 tools/memory_indexer.py
   ```
-- **Why it matters:** The indexer is the librarian of our Memory Core. It does the hard work of organizing our knowledge so that Mnemosyne can find what you need instantly. Keeping the index current is a key part of maintaining our collective intelligence.
+- **Why it matters:** The indexer is the librarian of our Memory Core, but its role is now that of a master archivist rather than a daily clerk. It provides a robust way to initialize or restore our collective memory, ensuring the long-term integrity and resilience of the system. For day-to-day operations, the `scribe` tool now handles indexing automatically.
 
 ---
 
