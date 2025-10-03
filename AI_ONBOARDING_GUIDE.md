@@ -105,6 +105,16 @@ A craftsman is only as good as their tools. We have forged our own to serve a sp
   This command will convert your question into a vector and search for the most similar entries in the Memory Core, even if they don't contain the exact words "solve" or "last".
 - **Why it matters:** Mnemosyne allows us to learn from our history in a more intuitive and powerful way. It helps us uncover hidden connections and build upon past successes without needing to remember specific terminology. It is your conversational window into the accumulated experience of this ecosystem.
 
+#### **The Codebase Auditor (`tools/codebase_auditor.py`): The Inspector**
+- **What it is:** The Codebase Auditor is a static analysis tool that scans our Python source code to identify potential issues. Its initial and primary function is to detect "dead code"—any functions or classes that are defined but never used.
+- **How to use it:** Run the script from the root of the repository to get a report of unused code. This is useful for periodic clean-up and maintenance.
+- **Example:**
+  ```bash
+  # Run the auditor to scan the codebase
+  python3 tools/codebase_auditor.py
+  ```
+- **Why it matters:** A clean codebase is easier to understand, maintain, and extend. By identifying and helping remove unused code, the Auditor reduces complexity and clutter. It is a key tool in our commitment to craftsmanship and long-term project health.
+
 #### **The Memory Indexer (`tools/memory_indexer.py`): The Librarian**
 - **What it is:** This is a powerful utility script for the Memory Core. Its primary purpose is to perform a **full rebuild** of the semantic search index from all existing memory files.
 - **How to use it:** You should only need to run this script in two specific scenarios:
