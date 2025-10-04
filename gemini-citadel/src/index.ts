@@ -7,10 +7,11 @@ dotenv.config();
 const main = async () => {
   console.log('--- Starting Gemini Citadel Off-Chain Brain ---');
 
-  const rpcUrl = process.env.RPC_URL;
+  // Use the new, structured environment variable
+  const rpcUrl = process.env.ARBITRUM_RPC_URL;
 
   if (!rpcUrl) {
-    console.error('FATAL: RPC_URL is not defined in the environment variables.');
+    console.error('FATAL: ARBITRUM_RPC_URL is not defined in the environment variables.');
     process.exit(1);
   }
 
