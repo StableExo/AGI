@@ -2,16 +2,15 @@ import { DataService } from './services/data.service';
 import * as dotenv from 'dotenv';
 
 // Load environment variables from .env file
-dotenv.config();
+dotenv.config({ path: '.env' });
 
 const main = async () => {
   console.log('--- Starting Gemini Citadel Off-Chain Brain ---');
 
-  // Use the new, structured environment variable
-  const rpcUrl = process.env.ARBITRUM_RPC_URL;
+  const rpcUrl = process.env.RPC_URL;
 
   if (!rpcUrl) {
-    console.error('FATAL: ARBITRUM_RPC_URL is not defined in the environment variables.');
+    console.error('FATAL: RPC_URL is not defined in the environment variables. Please check your .env file.');
     process.exit(1);
   }
 
