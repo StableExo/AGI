@@ -1,7 +1,7 @@
 import { DataService } from './services/data.service';
+import { StrategyEngine } from './services/strategy.service';
 import * as dotenv from 'dotenv';
 
-// Load environment variables from .env file
 dotenv.config({ path: '.env' });
 
 const main = async () => {
@@ -10,19 +10,20 @@ const main = async () => {
   const rpcUrl = process.env.RPC_URL;
 
   if (!rpcUrl) {
-    console.error('FATAL: RPC_URL is not defined in the environment variables. Please check your .env file.');
+    console.error('FATAL: RPC_URL is not defined. Please check your .env file.');
     process.exit(1);
   }
 
   try {
     const dataService = new DataService(rpcUrl);
+    const strategyEngine = new StrategyEngine(dataService);
 
-    // Test the connection by fetching the latest block number
-    await dataService.getBlockNumber();
+    // This will become the main application loop
+    await strategyEngine.findOpportunities();
 
-    console.log('--- System Initialized Successfully ---');
+    console.log('--- Main Loop Cycle Complete ---');
   } catch (error) {
-    console.error('An error occurred during system initialization:', error);
+    console.error('An error occurred during the main loop cycle:', error);
     process.exit(1);
   }
 };
