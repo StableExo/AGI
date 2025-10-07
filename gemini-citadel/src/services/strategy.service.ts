@@ -1,43 +1,60 @@
+// gemini-citadel/src/services/strategy.service.ts
 import { DataService } from './data.service';
+import { Pool, Opportunity } from '../types';
 
 /**
- * @interface ArbitrageOpportunity
- * @description Defines the structure for a potential arbitrage trade.
- */
-export interface ArbitrageOpportunity {
-  profit: number;
-  path: any[]; // This will be defined in more detail later
-}
-
-/**
- * @class StrategyEngine
+ * @class StrategyService
  * @description The brain of the operation. Analyzes market data to find
  * profitable arbitrage opportunities.
  */
-export class StrategyEngine {
+export class StrategyService {
   private dataService: DataService;
 
-  /**
-   * @constructor
-   * @param {DataService} dataService - An instance of the DataService to get market data.
-   */
   constructor(dataService: DataService) {
     this.dataService = dataService;
-    console.log('[StrategyEngine] Initialized.');
   }
 
   /**
-   * Analyzes the current market state to find arbitrage opportunities.
-   * @returns {Promise<ArbitrageOpportunity | null>} An opportunity if found, otherwise null.
+   * Finds arbitrage opportunities by comparing prices across different pools.
+   * @param {Pool[]} pools - A list of pools with their current prices.
+   * @returns {Opportunity[]} A list of identified profitable opportunities.
    */
-  public async findOpportunities(): Promise<ArbitrageOpportunity | null> {
-    console.log('[StrategyEngine] Analyzing market data for opportunities...');
+  public findArbitrageOpportunities(pools: Pool[]): Opportunity[] {
+    console.log('[StrategyService] Evaluating market data for arbitrage opportunities...');
+    const opportunities: Opportunity[] = [];
 
-    // In future versions, this method will contain the complex logic
-    // to compare prices across different pools and DEXs.
-    // For v0.1, we will simply simulate that no opportunity was found.
+    // Simple O(n^2) comparison for demonstration purposes.
+    for (let i = 0; i < pools.length; i++) {
+      for (let j = i + 1; j < pools.length; j++) {
+        const poolA = pools[i];
+        const poolB = pools[j];
 
-    console.log('[StrategyEngine] No profitable opportunities found in this cycle.');
-    return null;
+        // Check if both pools are for the same token pair (in any order)
+        const isSamePair =
+          (poolA.tokenA.symbol === poolB.tokenA.symbol && poolA.tokenB.symbol === poolB.tokenB.symbol) ||
+          (poolA.tokenA.symbol === poolB.tokenB.symbol && poolA.tokenB.symbol === poolB.tokenA.symbol);
+
+        if (isSamePair) {
+          // Simple price comparison
+          if (poolB.price > poolA.price) {
+            const profitMargin = (poolB.price - poolA.price) / poolA.price;
+            opportunities.push({
+              buyPool: poolA,
+              sellPool: poolB,
+              profitMargin: profitMargin,
+            });
+          } else if (poolA.price > poolB.price) {
+            const profitMargin = (poolA.price - poolB.price) / poolB.price;
+            opportunities.push({
+              buyPool: poolB,
+              sellPool: poolA,
+              profitMargin: profitMargin,
+            });
+          }
+        }
+      }
+    }
+    console.log(`[StrategyService] Found ${opportunities.length} potential opportunities.`);
+    return opportunities;
   }
 }
