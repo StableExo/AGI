@@ -26,6 +26,17 @@ done
 echo "All Python dependencies installed."
 echo
 
+# --- Node.js Dependency Installation ---
+echo "Installing Node.js dependencies for gemini-citadel..."
+if [ -d "gemini-citadel" ] && [ -f "gemini-citadel/package.json" ]; then
+  echo "Found gemini-citadel project. Running yarn install..."
+  (cd gemini-citadel && yarn install)
+  echo "Finished installing gemini-citadel dependencies."
+else
+  echo "Warning: 'gemini-citadel/package.json' not found. Skipping Node.js dependency installation."
+fi
+echo
+
 # --- Tool Permissions ---
 echo "Setting execute permissions for scripts in the tools/ directory..."
 if [ -d "tools" ]; then
