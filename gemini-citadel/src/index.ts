@@ -1,8 +1,10 @@
 // gemini-citadel/src/index.ts
 import { DataService } from './services/data.service';
+import { ExecutionService } from './services/execution.service';
 import { StrategyService } from './services/strategy.service';
 import { Pool, Opportunity } from './types'; // Import types
 import * as dotenv from 'dotenv';
+import { ethers } from 'ethers';
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ if (!rpcUrl) {
 
 const dataService = new DataService(rpcUrl);
 const strategyService = new StrategyService(dataService);
+const provider = new ethers.JsonRpcProvider(rpcUrl);
+const executionService = new ExecutionService(provider);
 
 /**
  * The main operational cycle of the bot.
@@ -52,7 +56,7 @@ const run = async () => {
 
     if (opportunities.length > 0) {
       console.log('--- [OPPORTUNITY] Identified Arbitrage Opportunities ---');
-      opportunities.forEach((opportunity) => {
+      for (const opportunity of opportunities) {
         const buyPoolName = `${opportunity.buyPool.tokenA.symbol}/${opportunity.buyPool.tokenB.symbol}`;
         const sellPoolName = `${opportunity.sellPool.tokenA.symbol}/${opportunity.sellPool.tokenB.symbol}`;
         // Note: The 'profit' is based on the calculated profitMargin from the strategy.
@@ -60,7 +64,13 @@ const run = async () => {
         console.log(
           `[OPPORTUNITY] Buy on ${buyPoolName}, Sell on ${sellPoolName}. Profit: ${opportunity.profitMargin}`
         );
-      });
+        const simulationResult = await executionService.simulateTrade(
+          opportunity
+        );
+        console.log(
+          `Simulation for opportunity ${opportunity.id} predicts a net profit of ${simulationResult} Wei`
+        );
+      }
     } else {
       console.log('[INFO] No opportunities found in this cycle.');
     }
