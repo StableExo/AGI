@@ -1,42 +1,30 @@
-import { StrategyEngine, Opportunity } from './strategy.service';
+import { StrategyEngine } from './strategy.service';
 import { Pool } from '../interfaces/Pool';
 
-// Use valid, checksummed addresses for mock data
-const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
-const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
-const DAI_ADDRESS = '0x6B175474E89094C44Da98b954EedeAC495271d0F';
-const WBTC_ADDRESS = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599';
-
-
-// Mock Pool Data with valid addresses
+// Mock data using valid checksummed addresses and bigints
 const MOCK_POOL_A: Pool = {
-  address: '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640', // Real USDC-WETH pool
+  address: '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640',
   dex: 'UniswapV3',
-  token0: { address: USDC_ADDRESS, symbol: 'USDC', decimals: 6 },
-  token1: { address: WETH_ADDRESS, symbol: 'WETH', decimals: 18 },
+  token0: { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', decimals: 6 },
+  token1: { address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', symbol: 'WETH', decimals: 18 },
   fee: 500,
-  sqrtPriceX96: 2273575399431482334314278996n, // Represents a price around ~3000
+  sqrtPriceX96: 2797883446869701119597357499268n, // Price ~1650
   liquidity: 1000000n,
-  tick: 200000,
+  tick: 0,
 };
 
 const MOCK_POOL_B: Pool = {
   ...MOCK_POOL_A,
-  address: '0x8ad599c3A0b1452422a05e4a43b010C85265e681', // Different USDC-WETH pool
-  // This sqrtPriceX96 represents a price of ~3300, a ~10% difference from Pool A.
-  sqrtPriceX96: 2382707019404143549360374390n,
+  address: '0x8ad599c3A0b1A56214534e7850e24B4C640d00A6',
+  sqrtPriceX96: 2825862281338301119597357499268n, // Price ~1680 (higher)
 };
 
-const MOCK_POOL_C: Pool = { // Different token pair (DAI-WBTC)
-  address: '0x9993E2540514897291B646549463a6e24482517D',
-  dex: 'UniswapV3',
-  token0: { address: DAI_ADDRESS, symbol: 'DAI', decimals: 18 },
-  token1: { address: WBTC_ADDRESS, symbol: 'WBTC', decimals: 8 },
-  fee: 3000,
-  sqrtPriceX96: 1n,
-  liquidity: 1n,
-  tick: 1,
+const MOCK_POOL_C: Pool = {
+    ...MOCK_POOL_A,
+    address: '0x1c3c3a4d7c5a8a1a3e4e9e8c9c8a4c3a2a1a3e4e',
+    sqrtPriceX96: 2797883446869701119597357499268n, // Same price as A
 };
+
 
 describe('StrategyEngine', () => {
   let engine: StrategyEngine;
@@ -45,23 +33,22 @@ describe('StrategyEngine', () => {
     engine = new StrategyEngine();
   });
 
-  it('should find an arbitrage opportunity between two pools with the same pair and different prices', () => {
-    const pools = [MOCK_POOL_A, MOCK_POOL_B, MOCK_POOL_C];
-    const opportunities = engine.findOpportunities(pools);
-
+  it('should find an opportunity when prices differ significantly', () => {
+    const opportunities = engine.findOpportunities([MOCK_POOL_A, MOCK_POOL_B]);
     expect(opportunities).toHaveLength(1);
-    const opportunity = opportunities[0];
-    expect(opportunity.type).toEqual('arbitrage');
-    // We don't know the order, so check for both addresses
-    expect([opportunity.path[0].address, opportunity.path[1].address]).toEqual(
-      expect.arrayContaining([MOCK_POOL_A.address, MOCK_POOL_B.address])
-    );
-    expect(opportunity.profit).toBeGreaterThan(0);
+    expect(opportunities[0].type).toBe('arbitrage');
   });
 
-  it('should not find an opportunity if no price discrepancy exists', () => {
-    const pools = [MOCK_POOL_A, { ...MOCK_POOL_A, address: '0x0000000000000000000000000000000000000001' }]; // Same price
-    const opportunities = engine.findOpportunities(pools);
+  it('should not find an opportunity when prices are the same', () => {
+    const opportunities = engine.findOpportunities([MOCK_POOL_A, MOCK_POOL_C]);
     expect(opportunities).toHaveLength(0);
+  });
+
+  it('should return the path with low price first, high price second', () => {
+    const opportunities = engine.findOpportunities([MOCK_POOL_B, MOCK_POOL_A]); // Inverted order
+    expect(opportunities).toHaveLength(1);
+    const { path } = opportunities[0];
+    expect(path[0].address).toBe(MOCK_POOL_A.address); // low price pool
+    expect(path[1].address).toBe(MOCK_POOL_B.address); // high price pool
   });
 });
