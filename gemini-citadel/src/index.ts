@@ -1,4 +1,5 @@
 import { DataService } from './services/data.service';
+import { StrategyEngine } from './services/strategy.service';
 import * as dotenv from 'dotenv';
 
 // Load environment variables from .env file
@@ -16,9 +17,12 @@ const main = async () => {
 
   try {
     const dataService = new DataService(rpcUrl);
+    const strategyEngine = new StrategyEngine(); // Instantiate the new engine
 
-    // Test the connection by fetching the latest block number
     await dataService.getBlockNumber();
+
+    // Placeholder for future logic
+    strategyEngine.findOpportunities([]);
 
     console.log('--- System Initialized Successfully ---');
   } catch (error) {
