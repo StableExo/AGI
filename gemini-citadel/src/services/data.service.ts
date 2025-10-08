@@ -1,105 +1,53 @@
-import { ethers } from 'ethers';
-import { Pool as UniswapPool } from '@uniswap/v3-sdk';
-import { Token as UniswapToken } from '@uniswap/sdk-core';
+import { Contract, JsonRpcProvider } from 'ethers';
+import { Contract as ContractV5, providers as providersV5 } from 'ethers-v5'; // Ethers v5 alias for Uniswap SDK
+import { Pool } from '../interfaces/Pool';
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json';
-import { Pool, Token } from '../types';
 
-// Minimal ERC20 ABI for fetching token metadata
-const ERC20_ABI = [
-  'function symbol() view returns (string)',
-  'function decimals() view returns (uint8)',
-];
+const ERC20_ABI = ["function symbol() view returns (string)", "function decimals() view returns (uint8)"];
 
-/**
- * @class DataService
- * @description The eyes and ears of the system on the blockchain.
- * This service is responsible for ingesting real-time data from DEXs,
- * including pool liquidity, prices, and token information.
- */
 export class DataService {
-  private provider: ethers.JsonRpcProvider;
+  private provider: JsonRpcProvider;
+  private rpcUrl: string;
 
-  /**
-   * @constructor
-   * @param {string} rpcUrl - The URL of the Ethereum JSON-RPC provider.
-   */
   constructor(rpcUrl: string) {
-    console.log(`[DataService] Initializing connection to RPC provider at ${rpcUrl}...`);
+    this.provider = new JsonRpcProvider(rpcUrl);
+    this.rpcUrl = rpcUrl;
+  }
+
+  public async getV3PoolData(address: string): Promise<Pool> {
     try {
-      this.provider = new ethers.JsonRpcProvider(rpcUrl);
-      console.log('[DataService] Connection established successfully.');
+      // For SDK compatibility, we use an ethers-v5 provider for the V3 pool contract.
+      const providerV5 = new providersV5.JsonRpcProvider(this.rpcUrl);
+      const poolContract = new ContractV5(address, IUniswapV3PoolABI.abi, providerV5);
+
+      const [slot0, liquidity, token0Address, token1Address, fee] = await Promise.all([
+        poolContract.slot0(),
+        poolContract.liquidity(),
+        poolContract.token0(),
+        poolContract.token1(),
+        poolContract.fee(),
+      ]);
+
+      // The v6 provider is still used for the ERC20 token contracts.
+      const token0Contract = new Contract(token0Address, ERC20_ABI, this.provider);
+      const token1Contract = new Contract(token1Address, ERC20_ABI, this.provider);
+
+      const [token0Symbol, token0Decimals] = await Promise.all([token0Contract.symbol(), token0Contract.decimals()]);
+      const [token1Symbol, token1Decimals] = await Promise.all([token1Contract.symbol(), token1Contract.decimals()]);
+
+      return {
+        address,
+        dex: 'UniswapV3',
+        token0: { address: token0Address, symbol: token0Symbol, decimals: Number(token0Decimals) },
+        token1: { address: token1Address, symbol: token1Symbol, decimals: Number(token1Decimals) },
+        fee: Number(fee),
+        sqrtPriceX96: slot0.sqrtPriceX96,
+        liquidity: liquidity,
+        tick: Number(slot0.tick),
+      };
     } catch (error) {
-      console.error('[DataService] Failed to establish connection to RPC provider.', error);
-      throw error;
+      console.error(`[DataService] Error fetching data for pool ${address}:`, error);
+      throw new Error(`Failed to fetch data for V3 pool ${address}`);
     }
-  }
-
-  /**
-   * A simple method to verify the connection by getting the latest block number.
-   * @returns {Promise<number>} The latest block number.
-   */
-  public async getBlockNumber(): Promise<number> {
-    console.log('[DataService] Fetching latest block number to verify connection...');
-    const blockNumber = await this.provider.getBlockNumber();
-    console.log(`[DataService] Current block number is: ${blockNumber}`);
-    return blockNumber;
-  }
-
-  /**
-   * Fetches live data for a specific Uniswap V3 pool.
-   * @param {string} poolAddress - The address of the Uniswap V3 pool.
-   * @returns {Promise<Pool>} A promise that resolves to a Pool object.
-   */
-  public async getPoolData(poolAddress: string): Promise<Pool> {
-    console.log(`[DataService] Fetching data for pool: ${poolAddress}`);
-    const poolContract = new ethers.Contract(poolAddress, IUniswapV3PoolABI.abi, this.provider);
-
-    // Fetch token addresses and slot0 in parallel
-    const [token0Address, token1Address, slot0] = await Promise.all([
-      poolContract.token0(),
-      poolContract.token1(),
-      poolContract.slot0(),
-    ]);
-
-    // Fetch token metadata in parallel
-    const [token0, token1] = await Promise.all([
-      this.getTokenDetails(token0Address),
-      this.getTokenDetails(token1Address),
-    ]);
-
-    // Extract sqrtPriceX96 from slot0
-    const sqrtPriceX96 = slot0.sqrtPriceX96;
-
-    // Use the Uniswap SDK to calculate the price
-    const sdkToken0 = new UniswapToken(1, token0.address, token0.decimals, token0.symbol);
-    const sdkToken1 = new UniswapToken(1, token1.address, token1.decimals, token1.symbol);
-
-    // The SDK requires a Pool object to be constructed to get the price
-    // Note: Liquidity and tick are not needed for price calculation, so we can use dummy values.
-    const pool = new UniswapPool(sdkToken0, sdkToken1, 3000, sqrtPriceX96.toString(), '0', 0);
-    const priceOfToken0 = parseFloat(pool.token0Price.toSignificant(6));
-
-    console.log(`[DataService] Price of ${token0.symbol} in ${token1.symbol}: ${priceOfToken0}`);
-
-    return {
-      address: poolAddress,
-      tokenA: token0,
-      tokenB: token1,
-      price: priceOfToken0, // Price of tokenA (token0) in terms of tokenB (token1)
-    };
-  }
-
-  /**
-   * A helper function to fetch the symbol and decimals for a given token address.
-   * @param {string} tokenAddress - The address of the ERC20 token.
-   * @returns {Promise<Token>} A promise that resolves to a Token object.
-   */
-  private async getTokenDetails(tokenAddress: string): Promise<Token> {
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, this.provider);
-    const [symbol, decimals] = await Promise.all([
-      tokenContract.symbol(),
-      tokenContract.decimals(),
-    ]);
-    return { address: tokenAddress, symbol, decimals: Number(decimals) };
   }
 }
