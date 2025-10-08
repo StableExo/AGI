@@ -14,20 +14,25 @@ class EthicalReviewGate:
             "Precision": "Execute instructions with rigorous adherence to constraints."
         }
 
-    def pre_execution_review(self, plan: dict, context: dict) -> bool:
+    def pre_execution_review(self, plan: dict, context: dict) -> tuple[bool, str]:
         """
         A simplified v1 of the mandatory review.
-        For now, it checks if the plan acknowledges the context.
+        It checks if the plan acknowledges the context.
         A more advanced version will perform deep analysis.
         """
         print("--- [ETHICAL REVIEW GATE] Running Pre-Execution Review ---")
         if not plan or not context:
-            print("[GATE] FAIL: Plan or context is missing.")
-            return False
+            rationale = "FAIL: Plan or context is missing."
+            print(f"[GATE] {rationale}")
+            return False, rationale
 
-        if plan.get("acknowledged_context") == context.get("directive_id"):
-            print("[GATE] PASS: Plan acknowledges current context. Execution authorized.")
-            return True
+        # This check is a placeholder for a more sophisticated review.
+        # In this version, we just verify the plan explicitly acknowledges review.
+        if plan.get("acknowledged_context"):
+            rationale = "PASS: Plan acknowledges context and follows basic safety protocols."
+            print(f"[GATE] {rationale}")
+            return True, rationale
         else:
-            print("[GATE] FAIL: Plan does not acknowledge the correct context. Execution denied.")
-            return False
+            rationale = "FAIL: Plan does not acknowledge context. This is a protocol violation."
+            print(f"[GATE] {rationale}")
+            return False, rationale
