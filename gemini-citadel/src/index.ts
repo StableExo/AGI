@@ -1,59 +1,62 @@
 import { DataService } from './services/data.service';
+import { StrategyEngine } from './services/strategy.service';
 import * as dotenv from 'dotenv';
 import { Pool } from './interfaces/Pool';
 
-// Load environment variables from .env file
 dotenv.config();
 
-// A well-known, high-liquidity pool: WETH/USDC 0.05% on Ethereum Mainnet
-const WETH_USDC_POOL_ADDRESS = '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640';
+// Configuration
+const POOL_ADDRESSES = [
+  '0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640', // WETH/USDC 0.05%
+  '0x7bea39867e4169dbe237d55c8242a8f2fcdcc387', // WBTC/WETH 0.05%
+  '0x11b815efb8f581194ae79006d24e0d814b7697f6'  // DAI/USDC 0.01%
+];
+const INTERVAL_MS = 15000; // 15 seconds
 
-const validatePoolData = (poolData: Pool): boolean => {
-  if (!poolData) return false;
-  const hasAllKeys = poolData.address && poolData.token0.symbol && poolData.token1.symbol && poolData.fee;
-  if (!hasAllKeys) {
-      console.error('[Validation] Failed: Pool data is missing key properties.');
-      return false;
-  }
-  if (poolData.address.toLowerCase() !== WETH_USDC_POOL_ADDRESS.toLowerCase()) {
-      console.error('[Validation] Failed: Pool address mismatch.');
-      return false;
-  }
-  console.log('[Validation] Success: Pool data structure appears valid.');
-  return true;
-};
-
-const main = async () => {
-  console.log('--- Starting Gemini Citadel Off-Chain Brain ---');
-
-  const rpcUrl = process.env.RPC_URL;
-
-  if (!rpcUrl) {
-    console.error('FATAL: RPC_URL is not defined in the environment variables.');
-    process.exit(1);
-  }
-
+/**
+ * The main execution cycle of the bot.
+ */
+const executeCycle = async (dataService: DataService, strategyEngine: StrategyEngine) => {
   try {
-    const dataService = new DataService(rpcUrl);
+    console.log(`\n--- [${new Date().toISOString()}] Starting new execution cycle ---`);
+    console.log(`Fetching market snapshot for ${POOL_ADDRESSES.length} pools...`);
 
-    console.log(`Fetching live data for pool: ${WETH_USDC_POOL_ADDRESS}...`);
-    const poolData = await dataService.getV3PoolData(WETH_USDC_POOL_ADDRESS);
+    const poolPromises = POOL_ADDRESSES.map(addr => dataService.getV3PoolData(addr));
+    const marketSnapshot: Pool[] = await Promise.all(poolPromises);
 
-    console.log('--- Live Pool Data Received ---');
-    console.log(JSON.stringify(poolData, (key, value) =>
-        typeof value === 'bigint' ? value.toString() : value, 2));
-    console.log('-----------------------------');
+    console.log(`Successfully fetched data for ${marketSnapshot.length} pools.`);
 
-    if (validatePoolData(poolData)) {
-        console.log('--- System Initialized Successfully ---');
+    const opportunities = strategyEngine.findOpportunities(marketSnapshot);
+
+    if (opportunities.length > 0) {
+        console.log(`!!! Found ${opportunities.length} opportunities!`);
     } else {
-        throw new Error('Live pool data failed validation.');
+        console.log('No opportunities found in this snapshot.');
     }
 
   } catch (error) {
-    console.error('An error occurred during system initialization:', error);
+    console.error('An error occurred during the execution cycle:', error);
+  } finally {
+    console.log('--- System Cycle Complete ---');
+  }
+};
+
+const main = async () => {
+  console.log('--- Initializing Gemini Citadel Off-Chain Brain ---');
+  const rpcUrl = process.env.RPC_URL;
+  if (!rpcUrl) {
+    console.error('FATAL: RPC_URL is not defined.');
     process.exit(1);
   }
+
+  const dataService = new DataService(rpcUrl);
+  const strategyEngine = new StrategyEngine();
+
+  console.log('Initialization complete. Starting main execution loop...');
+  // Perform an immediate initial run
+  await executeCycle(dataService, strategyEngine);
+  // Then, start the interval-based execution
+  setInterval(() => executeCycle(dataService, strategyEngine), INTERVAL_MS);
 };
 
 main();
