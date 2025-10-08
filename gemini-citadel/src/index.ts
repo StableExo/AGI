@@ -1,7 +1,7 @@
 // gemini-citadel/src/index.ts
 import { DataService } from './services/data.service';
 import { StrategyService } from './services/strategy.service';
-import { Pool, Token } from './types'; // Import types
+import { Pool } from './types'; // Import types
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,24 +18,30 @@ const main = async () => {
     const dataService = new DataService(rpcUrl);
     const strategyService = new StrategyService(dataService);
 
-    // --- Test Harness for StrategyService ---
-    const WETH: Token = { address: '0x...', symbol: 'WETH' };
-    const USDC: Token = { address: '0x...', symbol: 'USDC' };
+    // --- Live Data Integration ---
+    console.log('--- Fetching Live Pool Data ---');
 
-    // Create mock pool data with a clear price discrepancy
-    const mockPools: Pool[] = [
-      { address: 'pool1', tokenA: WETH, tokenB: USDC, price: 4000 }, // Buy here
-      { address: 'pool2', tokenA: WETH, tokenB: USDC, price: 4050 }, // Sell here
-      { address: 'pool3', tokenA: WETH, tokenB: { address: '0x...', symbol: 'DAI' }, price: 4010 }, // Different pair
+    // Pool addresses provided by Mnemosyne
+    const poolAddresses = [
+      '0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640', // WETH/USDC 0.05%
+      '0x60594a405d53811d3bc4766596efd80fd545a270', // WETH/DAI 0.3%
     ];
 
-    const opportunities = strategyService.findArbitrageOpportunities(mockPools);
+    // Fetch data for all pools in parallel
+    const livePools: Pool[] = await Promise.all(
+      poolAddresses.map((address) => dataService.getPoolData(address))
+    );
+
+    console.log('--- Analyzing for Arbitrage Opportunities ---');
+    const opportunities = strategyService.findArbitrageOpportunities(livePools);
 
     if (opportunities.length > 0) {
       console.log('--- Identified Arbitrage Opportunities ---');
       console.log(JSON.stringify(opportunities, null, 2));
+    } else {
+      console.log('--- No Arbitrage Opportunities Found ---');
     }
-    // --- End Test Harness ---
+    // --- End Live Data Integration ---
 
     console.log('--- System Initialized Successfully ---');
   } catch (error) {
