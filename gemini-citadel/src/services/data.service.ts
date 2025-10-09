@@ -9,9 +9,31 @@ export class DataService {
   private provider: JsonRpcProvider;
   private rpcUrl: string;
 
+  /**
+   * @constructor
+   * @param {string} rpcUrl - The URL of the Ethereum JSON-RPC provider.
+   */
   constructor(rpcUrl: string) {
-    this.provider = new JsonRpcProvider(rpcUrl);
-    this.rpcUrl = rpcUrl;
+    console.log(`[DataService] Initializing connection to RPC provider...`);
+    try {
+      this.provider = new JsonRpcProvider(rpcUrl);
+      this.rpcUrl = rpcUrl;
+      console.log('[DataService] Connection established successfully.');
+    } catch (error) {
+      console.error('[DataService] Failed to establish connection to RPC provider.', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verifies the connection by getting the latest block number.
+   * @returns {Promise<number>} The latest block number.
+   */
+  public async getBlockNumber(): Promise<number> {
+    console.log('[DataService] Fetching latest block number...');
+    const blockNumber = await this.provider.getBlockNumber();
+    console.log(`[DataService] Current block number is: ${blockNumber}`);
+    return blockNumber;
   }
 
   public async getV3PoolData(address: string): Promise<Pool> {
