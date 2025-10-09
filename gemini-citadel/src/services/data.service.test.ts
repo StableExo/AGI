@@ -1,14 +1,12 @@
 import { DataService } from './data.service';
-import { Contract as ContractV6 } from 'ethers';
+import { Contract as ContractV6, JsonRpcProvider } from 'ethers';
 import { Contract as ContractV5 } from 'ethers-v5';
 
 // Mock the ethers v6 Contract module
 jest.mock('ethers', () => ({
   ...jest.requireActual('ethers'), // Import and retain default exports
   Contract: jest.fn(),
-  JsonRpcProvider: jest.fn().mockImplementation(() => ({
-    // Mock any methods needed on the provider instance if necessary
-  })),
+  JsonRpcProvider: jest.fn(),
 }));
 
 // Mock the ethers-v5 Contract module
@@ -25,6 +23,7 @@ jest.mock('ethers-v5', () => ({
 // Create typed mock variables using the correct casting
 const mockedContractV6 = ContractV6 as unknown as jest.Mock;
 const mockedContractV5 = ContractV5 as unknown as jest.Mock;
+const mockedJsonRpcProvider = JsonRpcProvider as jest.Mock;
 
 
 describe('DataService', () => {
@@ -34,11 +33,18 @@ describe('DataService', () => {
   const MOCK_TOKEN1_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 
   let dataService: DataService;
+  let mockProviderInstance: { getBlockNumber: jest.Mock };
 
   beforeEach(() => {
     // Reset mocks before each test
     mockedContractV5.mockClear();
     mockedContractV6.mockClear();
+
+    mockProviderInstance = {
+      getBlockNumber: jest.fn(),
+    };
+    mockedJsonRpcProvider.mockImplementation(() => mockProviderInstance);
+
     dataService = new DataService(MOCK_RPC_URL);
   });
 
@@ -105,5 +111,29 @@ describe('DataService', () => {
     await expect(dataService.getV3PoolData(MOCK_POOL_ADDRESS))
       .rejects
       .toThrow(`Failed to fetch data for V3 pool ${MOCK_POOL_ADDRESS}`);
+  });
+
+  describe('getBlockNumber', () => {
+    it('should return the block number on a successful call', async () => {
+      // --- Mock ---
+      const MOCK_BLOCK_NUMBER = 123456;
+      mockProviderInstance.getBlockNumber.mockResolvedValue(MOCK_BLOCK_NUMBER);
+
+      // --- Execution ---
+      const blockNumber = await dataService.getBlockNumber();
+
+      // --- Assertions ---
+      expect(blockNumber).toBe(MOCK_BLOCK_NUMBER);
+      expect(mockProviderInstance.getBlockNumber).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an error if the provider fails to get the block number', async () => {
+      // --- Mock ---
+      const errorMessage = 'Provider error';
+      mockProviderInstance.getBlockNumber.mockRejectedValue(new Error(errorMessage));
+
+      // --- Execution & Assertions ---
+      await expect(dataService.getBlockNumber()).rejects.toThrow(errorMessage);
+    });
   });
 });
