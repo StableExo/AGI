@@ -4,10 +4,9 @@ const main = async () => {
   console.log('--- Starting Gemini Citadel Off-Chain Brain ---');
   try {
     const app = new AppController();
-    await app.start();
-    console.log('--- System Initialized Successfully ---');
+    await app.start(); // This will now run indefinitely
   } catch (error) {
-    // The error is already logged by the controller, so we just exit.
+    console.error('--- A fatal error occurred during initialization ---', error)
     process.exit(1);
   }
 };
