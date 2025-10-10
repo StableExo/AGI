@@ -35,6 +35,9 @@ jobs:
 
       - name: Post Briefing as Comment
         uses: actions/github-script@v6
+        # Use an environment variable to safely pass the report body
+        env:
+          REPORT_BODY: ${{ steps.briefing.outputs.report }}
         if: steps.briefing.outputs.report != ''
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -43,5 +46,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `${{ steps.briefing.outputs.report }}`
+              body: process.env.REPORT_BODY
             });
