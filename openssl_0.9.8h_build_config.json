@@ -1,0 +1,25 @@
+{
+  "global": {
+    "LIBS": "libcrypto.a libssl.a",
+    "EX_LIBS": "-ldl",
+    "SHARED_LDFLAGS": "-m64"
+  },
+  "crypto": {
+    "CFLAGS": "-I. -I.. -I../include -g"
+  },
+  "ssl": {
+    "CFLAGS": "-I../crypto -I.. -I../include -g"
+  },
+  "engines": {
+    "CFLAGS": "-I../include -g"
+  },
+  "apps": {
+    "CFLAGS": "-DMONOLITH -I.. -I../include -g -static"
+  },
+  "test": {
+    "CFLAGS": "-I.. -I../include -g"
+  },
+  "tools": {
+    "CFLAGS": "-I.. -I../../include -g"
+  }
+}
