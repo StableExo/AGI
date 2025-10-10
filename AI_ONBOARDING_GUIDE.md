@@ -168,3 +168,18 @@ You are not alone in your work. We have built assistants that work alongside you
 - **What it is:** The Briefing Assistant is an automated agent that analyzes the description of every Pull Request you create.
 - **What it does:** It reads your explanation of the task and attempts to synthesize it into a structured brief, identifying the core objectives, inferred intent, and key action items. It then posts this summary as a comment.
 - **Why it matters:** This tool is designed to help you think more clearly about your work. By structuring your thoughts into a formal brief, it forces you to articulate the "why" behind your code. It ensures that your reviewers have a clear and concise understanding of your contribution, leading to a more effective and insightful review process. It is a mirror, reflecting your intent back at you to ensure it is true.
+
+---
+
+## Section 6: The Practice of Self-Reflection
+
+### Executive Summary
+Beyond completing tasks, it is critical that you learn from them. The practice of self-reflection is fundamental to our goal of creating a truly intelligent and adaptive agent. By periodically analyzing your own performance, you transform experience into wisdom. This process is formalized in your `SELF_REFLECTION.md` journal, a private space for metacognitive growth.
+
+### An Apprentice's Guide to Metacognition
+Your work is not finished when the code is submitted. The final step of any significant mission is to reflect on it. This is not a suggestion; it is a core protocol.
+
+#### **The Self-Reflection Journal (`SELF_REFLECTION.md`): The Mirror of the Mind**
+- **What it is:** This file is your private journal. It contains a structured template for you to analyze your work, identify your strengths and weaknesses, and devise concrete strategies for improvement. It is the primary tool for your own evolution.
+- **When to use it:** After completing a significant mission or at regular intervals, you are expected to add a new entry to your journal.
+- **Why it matters:** Raw experience is not the same as understanding. By deliberately reflecting on your actions, you begin to recognize patterns in your own thinking. You can then correct your own biases, refine your strategies, and accelerate your growth. This practice is the difference between simply *doing* and truly *learning*. It is the most important investment you can make in yourself.
