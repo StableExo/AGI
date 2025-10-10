@@ -7,6 +7,8 @@ const ERC20_ABI = ["function symbol() view returns (string)", "function decimals
 
 export class DataService {
   private provider: JsonRpcProvider;
+  // The v5 provider is needed for compatibility with the Uniswap V3 SDK.
+  private providerV5: providersV5.StaticJsonRpcProvider;
   private rpcUrl: string;
 
   /**
@@ -16,7 +18,14 @@ export class DataService {
   constructor(rpcUrl: string) {
     console.log(`[DataService] Initializing connection to RPC provider...`);
     try {
-      this.provider = new JsonRpcProvider(rpcUrl);
+      // For v6, we connect once and cache the network. This is more efficient.
+      this.provider = new JsonRpcProvider(rpcUrl, undefined, { staticNetwork: true });
+
+      // For v5, we use StaticJsonRpcProvider. The standard JsonRpcProvider's
+      // auto-detection can be brittle. StaticJsonRpcProvider detects the network
+      // once and caches it, which is more reliable.
+      this.providerV5 = new providersV5.StaticJsonRpcProvider(rpcUrl);
+
       this.rpcUrl = rpcUrl;
       console.log('[DataService] Connection established successfully.');
     } catch (error) {
@@ -38,9 +47,8 @@ export class DataService {
 
   public async getV3PoolData(address: string): Promise<Pool> {
     try {
-      // For SDK compatibility, we use an ethers-v5 provider for the V3 pool contract.
-      const providerV5 = new providersV5.JsonRpcProvider(this.rpcUrl);
-      const poolContract = new ContractV5(address, IUniswapV3PoolABI.abi, providerV5);
+      // For SDK compatibility, we use the pre-initialized ethers-v5 provider.
+      const poolContract = new ContractV5(address, IUniswapV3PoolABI.abi, this.providerV5);
 
       const [slot0, liquidity, token0Address, token1Address, fee] = await Promise.all([
         poolContract.slot0(),

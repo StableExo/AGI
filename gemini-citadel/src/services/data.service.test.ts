@@ -1,24 +1,29 @@
 import { DataService } from './data.service';
 import { Contract as ContractV6, JsonRpcProvider } from 'ethers';
-import { Contract as ContractV5 } from 'ethers-v5';
+import { Contract as ContractV5, providers as providersV5 } from 'ethers-v5';
 
-// Mock the ethers v6 Contract module
+// Mock the ethers v6 modules
 jest.mock('ethers', () => ({
   ...jest.requireActual('ethers'), // Import and retain default exports
   Contract: jest.fn(),
-  JsonRpcProvider: jest.fn(),
+  JsonRpcProvider: jest.fn(), // This will be mocked in the test setup
 }));
 
-// Mock the ethers-v5 Contract module
-jest.mock('ethers-v5', () => ({
-  ...jest.requireActual('ethers-v5'),
-  Contract: jest.fn(),
-  providers: {
-    JsonRpcProvider: jest.fn().mockImplementation(() => ({
-      // Mock any methods needed on the v5 provider instance
-    })),
-  },
-}));
+// Mock the ethers-v5 modules
+jest.mock('ethers-v5', () => {
+  const originalEthersV5 = jest.requireActual('ethers-v5');
+  return {
+    ...originalEthersV5,
+    Contract: jest.fn(),
+    providers: {
+      ...originalEthersV5.providers,
+      // Mock StaticJsonRpcProvider, which is now used in DataService
+      StaticJsonRpcProvider: jest.fn().mockImplementation(() => ({
+        // Mock any methods needed on the v5 provider instance if necessary for tests
+      })),
+    },
+  };
+});
 
 // Create typed mock variables using the correct casting
 const mockedContractV6 = ContractV6 as unknown as jest.Mock;
@@ -39,7 +44,9 @@ describe('DataService', () => {
     // Reset mocks before each test
     mockedContractV5.mockClear();
     mockedContractV6.mockClear();
+    mockedJsonRpcProvider.mockClear();
 
+    // This mock will be returned when `new JsonRpcProvider(...)` is called in DataService constructor
     mockProviderInstance = {
       getBlockNumber: jest.fn(),
     };
