@@ -5,14 +5,14 @@ import sys
 import base58
 from ecdsa import SECP256k1, SigningKey
 
-def derive_address(private_key_hex):
+def derive_address(private_key_hex: str) -> str:
     """
     Derives a Bitcoin address from a private key.
+    Raises ValueError if the private key is invalid.
     """
     # 1. Validate private key
     if not (len(private_key_hex) == 64 and all(c in '0123456789abcdefABCDEF' for c in private_key_hex)):
-        print("Error: Private key must be a 64-character hexadecimal string.", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("Private key must be a 64-character hexadecimal string.")
 
     # 1. Decode the hex private key into bytes
     private_key_bytes = bytes.fromhex(private_key_hex)
@@ -57,9 +57,12 @@ def main():
     parser.add_argument("private_key", help="A 64-character hexadecimal private key.")
     args = parser.parse_args()
 
-    address = derive_address(args.private_key)
-    if address:
+    try:
+        address = derive_address(args.private_key)
         print(address)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
