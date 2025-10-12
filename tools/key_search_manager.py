@@ -57,6 +57,7 @@ def main():
     parser = argparse.ArgumentParser(description="Manager for the parallel key search.")
     parser.add_argument("--chunk-size", type=int, default=10000000, help="The number of keys for each worker to search.")
     parser.add_argument("--num-workers", type=int, default=cpu_count(), help="The number of worker processes to launch.")
+    parser.add_argument("--test-run", action="store_true", help="Run only one batch of workers for testing purposes.")
     args = parser.parse_args()
 
     if not os.path.exists(WORKER_SCRIPT_PATH):
@@ -90,9 +91,20 @@ def main():
 
                 logging.info(f"Dispatching WORKER {next_worker_id} (Range: {start} to {end - 1})")
 
+                # In Python 3, it's good practice to close inherited file descriptors
+                # in the child process. The simplest way is to use `close_fds=True`.
+                # However, we can't do that when also redirecting stdout/stderr.
+                # The `preexec_fn` is a more targeted way to do this on Unix.
+                # It ensures the child doesn't hold onto the parent's logging file handlers,
+                # which is a common cause of deadlocks in this pattern.
+                def preexec_function():
+                    # Close all open file descriptors other than stdin, stdout, stderr
+                    os.closerange(3, os.sysconf("SC_OPEN_MAX"))
+
                 process = subprocess.Popen(
                     [sys.executable, WORKER_SCRIPT_PATH, "--start-counter", str(start), "--end-counter", str(end)],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1,
+                    preexec_fn=preexec_function
                 )
                 processes[next_worker_id] = process
 
@@ -121,6 +133,11 @@ def main():
                     continue
 
             time.sleep(0.05)  # Small sleep to prevent a tight loop from consuming 100% CPU
+
+            # If this is a test run, exit after the first full batch of workers is launched.
+            if args.test_run and next_worker_id >= args.num_workers:
+                logging.info("Test run complete. Waiting for dispatched workers to finish...")
+                break # Exit the main 'while True' dispatch loop
 
     except KeyboardInterrupt:
         logging.info("\nTermination signal received. Shutting down all workers...")
