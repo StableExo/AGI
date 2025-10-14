@@ -1,0 +1,30 @@
+--- Auditing builder-operations/src/auth_manager.py ---
+Dissonance Detected: Class 'AuthManager' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing builder-operations/tests/test_logger.py ---
+Dissonance Detected: Class 'TestLogger' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing ethics_engine/gate.py ---
+Dissonance Detected: Class 'EthicalReviewGate' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing jules_core/test_gated_executor.py ---
+Dissonance Detected: Class 'TestGatedExecutor' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing tools/test_codebase_auditor.py ---
+Dissonance Detected: Class 'TestCodebaseAuditor' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing tools/auditor.py ---
+Dissonance Detected: Class 'HarmonicVisitor' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing tools/test_scribe_integration.py ---
+Dissonance Detected: Class 'TestScribeIntegration' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing tools/codebase_auditor.py ---
+Dissonance Detected: Class 'CodeVisitor' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing tools/test_auditor.py ---
+Dissonance Detected: Class 'TestAuditorWithArtifacts' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+
+--- Auditing tools/code_cartographer.py ---
+Dissonance Detected: Class 'FuncDefVisitor' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.
+Dissonance Detected: Class 'FuncCallVisitor' does not instantiate 'self.lock = threading.Lock()' in its __init__ method.

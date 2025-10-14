@@ -10,7 +10,14 @@ import ast
 import os
 
 # Directories to be analyzed
-TARGET_DIRECTORIES = ["ai-ecosystem", "tools", "utils"]
+TARGET_DIRECTORIES = [
+    "builder-operations",
+    "ethics_engine",
+    "exploit_dev",
+    "jules_core",
+    "tools",
+    "utils",
+]
 
 class CodeVisitor(ast.NodeVisitor):
     """
