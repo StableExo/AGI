@@ -9,10 +9,14 @@ def _format_plan_for_review(plan_string: str, objective: str) -> dict:
     # Use regex to find all numbered list items. This is more robust than simple splitting.
     steps = re.findall(r'^\s*\d+\.\s*(.*)', plan_string, re.MULTILINE)
 
+    # V2: The gate now requires explicit acknowledgement in the plan itself.
+    # We search for a specific string to confirm this.
+    acknowledgement_found = "acknowledge" in plan_string.lower()
+
     plan_object = {
         "objective": objective,
         "steps": steps,
-        "acknowledged_context": True  # As per the v1 gate requirement
+        "acknowledged_context": acknowledgement_found
     }
     return plan_object
 
