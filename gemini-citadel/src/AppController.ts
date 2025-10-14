@@ -6,6 +6,7 @@ import { ExecutionManager } from './services/ExecutionManager';
 // Import protocol modules
 import { BtccFetcher } from './protocols/btcc/BtccFetcher';
 import { BtccOrderBuilder } from './protocols/btcc/BtccOrderBuilder';
+import { BtccCustomFetcher } from './protocols/btcc/BtccCustomFetcher';
 
 const LOOP_INTERVAL_MS = 10000; // 10 seconds
 
@@ -70,18 +71,14 @@ export class AppController {
     }
   }
 
-  /**
-   * Starts the main application loop, which runs cycles indefinitely.
-   */
   public async start() {
-    console.log('[AppController] Starting main execution loop...');
-    // Perform an initial run immediately on startup
-    await this.runSingleCycle();
-
-    while (true) {
-      console.log(`[AppController] Waiting for ${LOOP_INTERVAL_MS / 1000} seconds before the next cycle...`);
-      await new Promise(resolve => setTimeout(resolve, LOOP_INTERVAL_MS));
-      await this.runSingleCycle();
+    console.log('--- Starting Connection Test ---');
+    try {
+        const btccFetcher = new BtccCustomFetcher();
+        await btccFetcher.initialize();
+        console.log('--- Connection Test SUCCESSFUL ---');
+    } catch (error) {
+        console.error('--- Connection Test FAILED ---');
     }
   }
 }
