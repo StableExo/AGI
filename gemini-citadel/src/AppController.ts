@@ -72,13 +72,13 @@ export class AppController {
   }
 
   public async start() {
-    console.log('--- Starting Connection Test ---');
+    console.log('--- Starting NEW Spot API Connection Test ---');
     try {
         const btccFetcher = new BtccCustomFetcher();
-        await btccFetcher.initialize();
-        console.log('--- Connection Test SUCCESSFUL ---');
+        await btccFetcher.testConnection();
+        console.log('--- Spot API Connection Test SUCCESSFUL ---');
     } catch (error) {
-        console.error('--- Connection Test FAILED ---');
+        console.error('--- Spot API Connection Test FAILED ---');
     }
   }
 }
