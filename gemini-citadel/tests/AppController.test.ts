@@ -13,14 +13,14 @@ jest.mock('../src/protocols/btcc/BtccOrderBuilder');
 
 // Create mock instances that we can control directly
 const mockFindOpportunities = jest.fn();
-const mockExecute = jest.fn();
+const mockExecuteTrade = jest.fn();
 
 // Provide a mock implementation for the constructors
 (StrategyEngine as jest.Mock).mockImplementation(() => ({
   findOpportunities: mockFindOpportunities,
 }));
 (ExecutionManager as jest.Mock).mockImplementation(() => ({
-  execute: mockExecute,
+  executeTrade: mockExecuteTrade,
 }));
 // Mock the other constructors as well to satisfy the AppController
 (ExchangeDataProvider as jest.Mock).mockImplementation(() => ({}));
@@ -38,7 +38,7 @@ describe('AppController', () => {
   beforeEach(() => {
     // Clear all mocks before each test
     mockFindOpportunities.mockClear();
-    mockExecute.mockClear();
+    mockExecuteTrade.mockClear();
     (StrategyEngine as jest.Mock).mockClear();
     (ExecutionManager as jest.Mock).mockClear();
 
@@ -59,7 +59,7 @@ describe('AppController', () => {
 
     // Assert
     expect(mockFindOpportunities).toHaveBeenCalledTimes(1);
-    expect(mockExecute).toHaveBeenCalledWith(mockOpportunity);
+    expect(mockExecuteTrade).toHaveBeenCalledWith(mockOpportunity);
   });
 
   it('should not execute if no opportunities are found', async () => {
@@ -71,7 +71,7 @@ describe('AppController', () => {
 
     // Assert
     expect(mockFindOpportunities).toHaveBeenCalledTimes(1);
-    expect(mockExecute).not.toHaveBeenCalled();
+    expect(mockExecuteTrade).not.toHaveBeenCalled();
   });
 
   it('should handle errors from the strategy engine gracefully', async () => {
@@ -85,7 +85,7 @@ describe('AppController', () => {
     await appController.runSingleCycle();
 
     // Assert
-    expect(mockExecute).not.toHaveBeenCalled();
+    expect(mockExecuteTrade).not.toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('An error occurred during the analysis cycle:'), testError);
 
     consoleErrorSpy.mockRestore();

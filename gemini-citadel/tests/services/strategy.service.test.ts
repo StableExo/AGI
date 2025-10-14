@@ -20,10 +20,13 @@ describe('StrategyEngine', () => {
         mockMockFetcher = new MockFetcher() as jest.Mocked<MockFetcher>;
 
         // Setup the data provider with the mocked fetchers and fees
-        dataProvider = new ExchangeDataProvider([
-            { name: 'btcc', instance: mockBtccFetcher, fee: 0.001 }, // 0.1% fee
-            { name: 'mockExchange', instance: mockMockFetcher, fee: 0.001 }, // 0.1% fee
-        ]);
+        dataProvider = new ExchangeDataProvider(
+            [
+                { name: 'btcc', instance: mockBtccFetcher, fee: 0.001 }, // 0.1% fee
+                { name: 'mockExchange', instance: mockMockFetcher, fee: 0.001 }, // 0.1% fee
+            ],
+            [] // No executors needed for this test
+        );
 
         strategyEngine = new StrategyEngine(dataProvider);
 

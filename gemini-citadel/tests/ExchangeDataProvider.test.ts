@@ -9,24 +9,26 @@ const mockFetcher: IFetcher = {
 
 describe('ExchangeDataProvider', () => {
   it('should register and retrieve a fetcher', () => {
-    const provider = new ExchangeDataProvider([
-      { name: 'mockex', instance: mockFetcher, fee: 0.001 },
-    ]);
+    const provider = new ExchangeDataProvider(
+      [{ name: 'mockex', instance: mockFetcher, fee: 0.001 }],
+      []
+    );
 
     const retrievedFetcher = provider.getFetcher('mockex');
     expect(retrievedFetcher).toBe(mockFetcher);
   });
 
   it('should return undefined for a non-existent fetcher', () => {
-    const provider = new ExchangeDataProvider([]);
+    const provider = new ExchangeDataProvider([], []);
     const retrievedFetcher = provider.getFetcher('nonexistent');
     expect(retrievedFetcher).toBeUndefined();
   });
 
   it('should return all registered fetchers', () => {
-    const provider = new ExchangeDataProvider([
-      { name: 'mockex', instance: mockFetcher, fee: 0.001 },
-    ]);
+    const provider = new ExchangeDataProvider(
+      [{ name: 'mockex', instance: mockFetcher, fee: 0.001 }],
+      []
+    );
 
     const allFetchers = provider.getAllFetchers();
     expect(allFetchers.size).toBe(1);
