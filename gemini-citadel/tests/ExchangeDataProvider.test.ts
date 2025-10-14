@@ -10,7 +10,7 @@ const mockFetcher: IFetcher = {
 describe('ExchangeDataProvider', () => {
   it('should register and retrieve a fetcher', () => {
     const provider = new ExchangeDataProvider([
-      { name: 'mockex', instance: mockFetcher },
+      { name: 'mockex', instance: mockFetcher, fee: 0.001 },
     ]);
 
     const retrievedFetcher = provider.getFetcher('mockex');
@@ -25,7 +25,7 @@ describe('ExchangeDataProvider', () => {
 
   it('should return all registered fetchers', () => {
     const provider = new ExchangeDataProvider([
-      { name: 'mockex', instance: mockFetcher },
+      { name: 'mockex', instance: mockFetcher, fee: 0.001 },
     ]);
 
     const allFetchers = provider.getAllFetchers();

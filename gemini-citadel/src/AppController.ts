@@ -4,9 +4,9 @@ import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
 
 // Import protocol modules
-import { BtccFetcher } from './protocols/btcc/BtccFetcher';
 import { BtccOrderBuilder } from './protocols/btcc/BtccOrderBuilder';
 import { BtccCustomFetcher } from './protocols/btcc/BtccCustomFetcher';
+import { MockFetcher } from './protocols/mock/MockFetcher';
 
 const LOOP_INTERVAL_MS = 10000; // 10 seconds
 
@@ -20,23 +20,19 @@ export class AppController {
 
     // --- Protocol and Service Initialization ---
 
-    // 1. Initialize BTCC Protocol Module
-    const btccApiKey = process.env.BTCC_API_KEY;
-    const btccApiSecret = process.env.BTCC_API_SECRET;
-    if (!btccApiKey || !btccApiSecret) {
-      throw new Error('BTCC_API_KEY or BTCC_API_SECRET is not set in the .env file.');
-    }
-    const btccFetcher = new BtccFetcher(btccApiKey, btccApiSecret);
+    // 1. Initialize Protocol Modules
+    const btccFetcher = new BtccCustomFetcher(); // Using the custom fetcher now
+    const mockFetcher = new MockFetcher();
     const btccOrderBuilder = new BtccOrderBuilder();
 
     // 2. Initialize Data Provider and Execution Manager
     this.exchangeDataProvider = new ExchangeDataProvider([
-      { name: 'btcturk', instance: btccFetcher },
-      // Future fetchers (e.g., for Uniswap) will be added here
+      { name: 'btcc', instance: btccFetcher, fee: 0.001 },
+      { name: 'mockExchange', instance: mockFetcher, fee: 0.001 }
     ]);
 
     this.executionManager = new ExecutionManager([
-      { name: 'btcturk', instance: btccOrderBuilder },
+      { name: 'btcc', instance: btccOrderBuilder },
       // Future builders will be added here
     ]);
 
