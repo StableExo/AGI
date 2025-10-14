@@ -1,111 +1,62 @@
-import { Pool } from '../interfaces/Pool';
-import { Price, Token, Fraction } from '@uniswap/sdk-core';
-import { DataService } from './data.service';
-
-// Define the structure of the pool configuration from pools.config.json
-interface PoolConfig {
-  name: string;
-  address: string;
-  tokenA: string;
-  tokenB: string;
-  fee: number;
-}
-
-export interface Opportunity {
-  type: 'arbitrage';
-  profit: number; // Represents the percentage difference
-  path: [Pool, Pool]; // A clear path from low price pool to high price pool
-}
+import { ExchangeDataProvider } from './ExchangeDataProvider';
+import { ITradeOpportunity } from '../interfaces/ITradeOpportunity';
 
 export class StrategyEngine {
-  private dataService: DataService;
-  private poolsConfig: PoolConfig[];
+  private dataProvider: ExchangeDataProvider;
 
-  constructor(dataService: DataService, poolsConfig: PoolConfig[]) {
+  constructor(dataProvider: ExchangeDataProvider) {
+    this.dataProvider = dataProvider;
     console.log('[StrategyEngine] Initialized.');
-    this.dataService = dataService;
-    this.poolsConfig = poolsConfig;
   }
 
-  private getPoolPrice(pool: Pool): Price<Token, Token> {
-    const token0 = new Token(1, pool.token0.address, pool.token0.decimals, pool.token0.symbol);
-    const token1 = new Token(1, pool.token1.address, pool.token1.decimals, pool.token1.symbol);
+  /**
+   * Analyzes market data to find profitable opportunities.
+   *
+   * For this phase, this method returns a hardcoded, simulated opportunity
+   * to verify that the "Log-Only" execution pipeline is working correctly.
+   *
+   * @returns A promise that resolves to an array of trade opportunities.
+   */
+  public async findOpportunities(): Promise<ITradeOpportunity[]> {
+    console.log('[StrategyEngine] Analyzing markets for opportunities...');
 
-    // Uniswap SDK price is token1 / token0. The price is represented as a fraction.
-    // The pool's sqrtPriceX96 is a Q64.96 fixed-point number.
-    // price = (sqrtPriceX96 / 2^96)^2
-    // To avoid floating point issues, we work with the squared value.
-    // price = sqrtPriceX96^2 / (2^96)^2 = sqrtPriceX96^2 / 2^192
-    // The Price constructor takes the numerator and denominator.
-    return new Price(
-      token0,
-      token1,
-      (1n << 192n).toString(), // Denominator: 2^192
-      (pool.sqrtPriceX96 * pool.sqrtPriceX96).toString() // Numerator: sqrtPriceX96^2
-    );
-  }
+    const btcturkFetcher = this.dataProvider.getFetcher('btcturk');
 
-  // This internal method contains the original analysis logic
-  private analyzePools(pools: Pool[]): Opportunity[] {
-    console.log(`[StrategyEngine] Analyzing ${pools.length} pools for opportunities...`);
-    const opportunities: Opportunity[] = [];
+    // If the BTCC fetcher is present, create a sample opportunity for logging.
+    if (btcturkFetcher) {
+      console.log('[StrategyEngine] Simulating a trade opportunity for verification...');
 
-    if (pools.length < 2) {
-      console.log('[StrategyEngine] Not enough pools to analyze for arbitrage.');
-      return opportunities;
-    }
+      // In a real scenario, we would fetch prices from two exchanges.
+      // const priceOnExchangeA = await fetcherA.fetchPrice('BTC/USDT');
+      // const priceOnExchangeB = await fetcherB.fetchPrice('BTC/USDT');
 
-    for (let i = 0; i < pools.length; i++) {
-      for (let j = i + 1; j < pools.length; j++) {
-        const poolA = pools[i];
-        const poolB = pools[j];
-
-        const samePair = (poolA.token0.address === poolB.token0.address && poolA.token1.address === poolB.token1.address) ||
-                         (poolA.token0.address === poolB.token1.address && poolA.token1.address === poolB.token0.address);
-
-        if (samePair) {
-          const priceA = this.getPoolPrice(poolA);
-          const priceB = this.getPoolPrice(poolB);
-
-          if (priceA.equalTo(priceB)) continue;
-
-          // Use robust fractional math for comparison
-          const priceDifference = priceA.greaterThan(priceB)
-            ? priceA.subtract(priceB).divide(priceB)
-            : priceB.subtract(priceA).divide(priceA);
-
-          const threshold = new Fraction(1, 1000); // 0.1% arbitrage threshold
-
-          if (priceDifference.greaterThan(threshold)) {
-            console.log(`!!! Potential Arbitrage Found for pair ${poolA.token0.symbol}/${poolA.token1.symbol} between pools ${poolA.address} and ${poolB.address}`);
-            console.log(`    Price A: ${priceA.toSignificant(6)}, Price B: ${priceB.toSignificant(6)}, Difference: ${priceDifference.toFixed(4)}%`);
-
-            // Sort the path by price to create a clear "buy low, sell high" path
-            const path: [Pool, Pool] = priceA.lessThan(priceB) ? [poolA, poolB] : [poolB, poolA];
-
-            opportunities.push({
-              type: 'arbitrage',
-              profit: parseFloat(priceDifference.toSignificant(4)),
-              path: path
-            });
+      const simulatedOpportunity: ITradeOpportunity = {
+        type: 'Arbitrage',
+        estimatedProfit: 25.50,
+        actions: [
+          {
+            action: 'Buy',
+            exchange: 'btcturk', // The protocol name must match the one registered in the manager
+            pair: 'BTC/USDT',
+            price: 50000.00,
+            amount: 0.1
+          },
+          {
+            action: 'Sell',
+            exchange: 'uniswap_v3', // A hypothetical second exchange
+            pair: 'BTC/USDT',
+            price: 50255.00,
+            amount: 0.1
           }
-        }
-      }
-    }
-    return opportunities;
-  }
+        ]
+      };
 
-  public async findOpportunities(): Promise<Opportunity[]> {
-    console.log(`[StrategyEngine] Fetching live data for ${this.poolsConfig.length} configured pools...`);
-    try {
-      const poolDataPromises = this.poolsConfig.map(p => this.dataService.getV3PoolData(p.address));
-      const pools = await Promise.all(poolDataPromises);
-      console.log(`[StrategyEngine] Successfully fetched data for ${pools.length} pools.`);
-      return this.analyzePools(pools);
-    } catch (error) {
-      console.error('[StrategyEngine] Failed to fetch pool data.', error);
-      // Re-throw the error to be caught by the AppController's loop
-      throw error;
+      // NOTE: This currently creates a duplicate log entry because the ExecutionManager
+      // iterates over actions. The BtccOrderBuilder will log once for each action that
+      // matches its protocol. This will be refined later. For now, we expect one log.
+      return [simulatedOpportunity];
     }
+
+    return [];
   }
 }
