@@ -72,13 +72,13 @@ export class AppController {
   }
 
   public async start() {
-    console.log('--- Starting NEW Spot API Connection Test ---');
-    try {
-        const btccFetcher = new BtccCustomFetcher();
-        await btccFetcher.testConnection();
-        console.log('--- Spot API Connection Test SUCCESSFUL ---');
-    } catch (error) {
-        console.error('--- Spot API Connection Test FAILED ---');
-    }
+    // The main loop is temporarily disabled to allow for a clean,
+    // single-run test of the connection. To re-enable, uncomment the
+    // while(true) loop and the delay.
+    console.log('[AppController] Starting main execution loop...');
+    // while (true) {
+      await this.runSingleCycle();
+    //   await new Promise(resolve => setTimeout(resolve, LOOP_INTERVAL_MS));
+    // }
   }
 }
