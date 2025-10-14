@@ -2373,6 +2373,13 @@ cbor@^9.0.0:
   dependencies:
     nofilter "^3.1.0"
 
+ccxt@^4.5.10:
+  version "4.5.10"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-4.5.10.tgz#baa228ecc91ef08a65a0639010b72f714a14900b"
+  integrity sha512-qf53wrD09IQNmjT1h/msAkk7QqXLHILbmbjbDkse98MyYU/KMOn7XkZrII8XqdY/6nIC6+7Gnw/JYrUmLymhmw==
+  dependencies:
+    ws "^8.8.1"
+
 chai-as-promised@^7.1.1:
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/chai-as-promised/-/chai-as-promised-7.1.2.tgz#70cd73b74afd519754161386421fb71832c6d041"
@@ -5917,7 +5924,7 @@ ws@8.18.0:
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.0.tgz#0d7505a6eafe2b0e712d232b42279f53bc289bbc"
   integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
 
-ws@8.18.3:
+ws@8.18.3, ws@^8.8.1:
   version "8.18.3"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.3.tgz#b56b88abffde62791c639170400c93dcb0c95472"
   integrity sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==

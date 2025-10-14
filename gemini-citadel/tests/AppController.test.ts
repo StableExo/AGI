@@ -1,49 +1,93 @@
 import { AppController } from '../src/AppController';
-import { DataService } from '../src/services/data.service';
 import { StrategyEngine } from '../src/services/strategy.service';
-import * as fs from 'fs';
+import { ExecutionManager } from '../src/services/ExecutionManager';
+import { ExchangeDataProvider } from '../src/services/ExchangeDataProvider';
+import { ITradeOpportunity } from '../src/interfaces/ITradeOpportunity';
 
-// Mock the dependent services and modules
-jest.mock('../src/services/data.service');
+// Mock the entire modules for the services
 jest.mock('../src/services/strategy.service');
-jest.mock('fs');
+jest.mock('../src/services/ExecutionManager');
+jest.mock('../src/services/ExchangeDataProvider');
+jest.mock('../src/protocols/btcc/BtccFetcher');
+jest.mock('../src/protocols/btcc/BtccOrderBuilder');
+
+// Create mock instances that we can control directly
+const mockFindOpportunities = jest.fn();
+const mockExecute = jest.fn();
+
+// Provide a mock implementation for the constructors
+(StrategyEngine as jest.Mock).mockImplementation(() => ({
+  findOpportunities: mockFindOpportunities,
+}));
+(ExecutionManager as jest.Mock).mockImplementation(() => ({
+  execute: mockExecute,
+}));
+// Mock the other constructors as well to satisfy the AppController
+(ExchangeDataProvider as jest.Mock).mockImplementation(() => ({}));
+
+
+const mockOpportunity: ITradeOpportunity = {
+  type: 'Arbitrage',
+  estimatedProfit: 100,
+  actions: [{ action: 'Buy', exchange: 'btcturk', pair: 'BTC/USDT', price: 50000, amount: 1 }],
+};
 
 describe('AppController', () => {
-  const mockReadFileSync = fs.readFileSync as jest.Mock;
-  const originalRpcUrl = process.env.RPC_URL;
+  let appController: AppController;
 
   beforeEach(() => {
-    // Reset mocks before each test
-    jest.clearAllMocks();
-    // Set a default mock for readFileSync to prevent errors in tests
-    mockReadFileSync.mockReturnValue('[]');
-    // Ensure RPC_URL is set for the constructor
-    process.env.RPC_URL = 'mock_rpc_url';
+    // Clear all mocks before each test
+    mockFindOpportunities.mockClear();
+    mockExecute.mockClear();
+    (StrategyEngine as jest.Mock).mockClear();
+    (ExecutionManager as jest.Mock).mockClear();
+
+    // Set up environment variables for the test
+    process.env.BTCC_API_KEY = 'test-key';
+    process.env.BTCC_API_SECRET = 'test-secret';
+
+    // Instantiate the controller, which will now use our controlled mocks
+    appController = new AppController();
   });
 
-  afterAll(() => {
-    // Restore original environment variables
-    process.env.RPC_URL = originalRpcUrl;
-  });
-
-  it('should be instantiated without throwing an error', () => {
+  it('should find and execute an opportunity', async () => {
     // Arrange
-    // Provide a minimal valid JSON structure for pools.config.json
-    const mockPoolConfig = [
-      {
-        name: 'Test Group',
-        pools: ['0xTestPoolAddress'],
-      },
-    ];
-    mockReadFileSync.mockReturnValue(JSON.stringify(mockPoolConfig));
+    mockFindOpportunities.mockResolvedValue([mockOpportunity]);
 
-    // Act & Assert
-    let appControllerInstance: AppController | null = null;
-    expect(() => {
-      appControllerInstance = new AppController();
-    }).not.toThrow();
+    // Act
+    await appController.runSingleCycle();
 
-    expect(appControllerInstance).not.toBeNull();
-    expect(appControllerInstance).toBeInstanceOf(AppController);
+    // Assert
+    expect(mockFindOpportunities).toHaveBeenCalledTimes(1);
+    expect(mockExecute).toHaveBeenCalledWith(mockOpportunity);
+  });
+
+  it('should not execute if no opportunities are found', async () => {
+    // Arrange
+    mockFindOpportunities.mockResolvedValue([]);
+
+    // Act
+    await appController.runSingleCycle();
+
+    // Assert
+    expect(mockFindOpportunities).toHaveBeenCalledTimes(1);
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it('should handle errors from the strategy engine gracefully', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const testError = new Error('Strategy Engine Failed');
+
+    // Arrange
+    mockFindOpportunities.mockRejectedValue(testError);
+
+    // Act
+    await appController.runSingleCycle();
+
+    // Assert
+    expect(mockExecute).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('An error occurred during the analysis cycle:'), testError);
+
+    consoleErrorSpy.mockRestore();
   });
 });
