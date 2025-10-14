@@ -4,9 +4,10 @@ import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
 
 // Import protocol modules
-import { BtccOrderBuilder } from './protocols/btcc/BtccOrderBuilder';
 import { BtccCustomFetcher } from './protocols/btcc/BtccCustomFetcher';
 import { MockFetcher } from './protocols/mock/MockFetcher';
+import { BtccExecutor } from './protocols/btcc/BtccExecutor';
+import { MockExecutor } from './protocols/mock/MockExecutor';
 
 const LOOP_INTERVAL_MS = 10000; // 10 seconds
 
@@ -21,20 +22,25 @@ export class AppController {
     // --- Protocol and Service Initialization ---
 
     // 1. Initialize Protocol Modules
-    const btccFetcher = new BtccCustomFetcher(); // Using the custom fetcher now
+    const btccFetcher = new BtccCustomFetcher();
     const mockFetcher = new MockFetcher();
-    const btccOrderBuilder = new BtccOrderBuilder();
+    const btccExecutor = new BtccExecutor();
+    const mockExecutor = new MockExecutor();
 
-    // 2. Initialize Data Provider and Execution Manager
-    this.exchangeDataProvider = new ExchangeDataProvider([
-      { name: 'btcc', instance: btccFetcher, fee: 0.001 },
-      { name: 'mockExchange', instance: mockFetcher, fee: 0.001 }
-    ]);
+    // 2. Initialize Data Provider
+    this.exchangeDataProvider = new ExchangeDataProvider(
+      [
+        { name: 'btcc', instance: btccFetcher, fee: 0.001 },
+        { name: 'mockExchange', instance: mockFetcher, fee: 0.001 }
+      ],
+      [
+        { name: 'btcc', instance: btccExecutor },
+        { name: 'mockExchange', instance: mockExecutor }
+      ]
+    );
 
-    this.executionManager = new ExecutionManager([
-      { name: 'btcc', instance: btccOrderBuilder },
-      // Future builders will be added here
-    ]);
+    // 3. Initialize Execution Manager
+    this.executionManager = new ExecutionManager(this.exchangeDataProvider);
 
     // 3. Initialize Strategy Engine
     // The old pool config loading is removed for now, as the strategy engine
@@ -55,8 +61,8 @@ export class AppController {
 
       if (opportunities.length > 0) {
         console.log(`[AppController] [${new Date().toISOString()}] Found ${opportunities.length} opportunities. Executing...`);
-        // The execution manager will handle the "Log-Only" logic.
-        await Promise.all(opportunities.map(opp => this.executionManager.execute(opp)));
+        // The new execution manager will handle the trade execution.
+        await Promise.all(opportunities.map(opp => this.executionManager.executeTrade(opp)));
       } else {
         console.log(`[AppController] [${new Date().toISOString()}] No opportunities found in this cycle.`);
       }

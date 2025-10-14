@@ -1,4 +1,5 @@
 import { IFetcher } from '../interfaces/IFetcher';
+import { IExecutor } from '../interfaces/IExecutor';
 
 interface IFetcherEntry {
   instance: IFetcher;
@@ -7,10 +8,17 @@ interface IFetcherEntry {
 
 export class ExchangeDataProvider {
   private fetchers: Map<string, IFetcherEntry> = new Map();
+  private executors: Map<string, IExecutor> = new Map();
 
-  constructor(fetcherInstances: { name: string; instance: IFetcher; fee: number }[]) {
+  constructor(
+    fetcherInstances: { name: string; instance: IFetcher; fee: number }[],
+    executorInstances: { name: string; instance: IExecutor }[]
+  ) {
     fetcherInstances.forEach(fetcher => {
       this.registerFetcher(fetcher.name, fetcher.instance, fetcher.fee);
+    });
+    executorInstances.forEach(executor => {
+      this.registerExecutor(executor.name, executor.instance);
     });
   }
 
@@ -26,12 +34,31 @@ export class ExchangeDataProvider {
   }
 
   /**
+   * Registers a new executor with the data provider.
+   * @param name - The name of the exchange.
+   * @param executor - The executor instance.
+   */
+  public registerExecutor(name: string, executor: IExecutor): void {
+    this.executors.set(name, executor);
+    console.log(`[ExchangeDataProvider] Registered executor: ${name}`);
+  }
+
+  /**
    * Gets a fetcher instance by name.
    * @param name - The name of the exchange.
    * @returns The fetcher instance.
    */
   public getFetcher(name: string): IFetcher | undefined {
     return this.fetchers.get(name)?.instance;
+  }
+
+  /**
+   * Gets an executor instance by name.
+   * @param name - The name of the exchange.
+   * @returns The executor instance.
+   */
+  public getExecutor(name: string): IExecutor | undefined {
+    return this.executors.get(name);
   }
 
   /**
