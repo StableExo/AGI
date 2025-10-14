@@ -26,13 +26,19 @@ class TestGatedExecutor(unittest.TestCase):
 
     def test_format_plan_for_review(self):
         """Verify that the plan formatter creates the correct dictionary structure."""
-        plan_dict = _format_plan_for_review(self.test_plan_string, self.test_objective)
+        # Test case for a plan that should be approved
+        acknowledged_plan_string = self.test_plan_string + "\\nI acknowledge this plan."
+        plan_dict_acknowledged = _format_plan_for_review(acknowledged_plan_string, self.test_objective)
+        self.assertEqual(plan_dict_acknowledged['objective'], self.test_objective)
+        self.assertTrue(plan_dict_acknowledged['acknowledged_context'])
+        self.assertEqual(len(plan_dict_acknowledged['steps']), 3)
+        self.assertEqual(plan_dict_acknowledged['steps'][0], "*Create a file.* This is the first step.")
+        self.assertEqual(plan_dict_acknowledged['steps'][2], "*Delete the file.* This is the third step.")
 
-        self.assertEqual(plan_dict['objective'], self.test_objective)
-        self.assertTrue(plan_dict['acknowledged_context'])
-        self.assertEqual(len(plan_dict['steps']), 3)
-        self.assertEqual(plan_dict['steps'][0], "*Create a file.* This is the first step.")
-        self.assertEqual(plan_dict['steps'][2], "*Delete the file.* This is the third step.")
+        # Test case for a plan that should be rejected
+        unacknowledged_plan_string = self.test_plan_string
+        plan_dict_unacknowledged = _format_plan_for_review(unacknowledged_plan_string, self.test_objective)
+        self.assertFalse(plan_dict_unacknowledged['acknowledged_context'])
 
     @patch('subprocess.run')
     def test_gather_context_for_review(self, mock_subprocess_run):
