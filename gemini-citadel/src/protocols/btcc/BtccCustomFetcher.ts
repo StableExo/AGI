@@ -84,6 +84,27 @@ export class BtccCustomFetcher implements IFetcher {
     }
 
     // --- Placeholder implementations for IFetcher interface ---
-    async fetchPrice(pair: string): Promise<number> { return 0; }
+    async fetchPrice(pair: string): Promise<number> {
+        try {
+            console.log(`[BtccCustomFetcher] Fetching price for ${pair}...`);
+            // The API likely expects the pair without any separators, e.g., "BTCUSDT"
+            const symbol = pair.replace('/', '');
+            const data = await this.makeSignedRequest('GET', '/btcc_api_trade/market/detail', { symbol });
+
+            if (data && data.result && typeof data.result.Last === 'number') {
+                console.log(`[BtccCustomFetcher] Successfully fetched price for ${pair}: ${data.result.Last}`);
+                return data.result.Last;
+            } else {
+                // Log the actual data received for diagnostics
+                console.error(`[BtccCustomFetcher] Unexpected response structure for ${pair}:`, data);
+                throw new Error(`Unexpected response structure for ${pair}.`);
+            }
+        } catch (error) {
+            // The makeSignedRequest method already logs the error, so we can just re-throw it.
+            console.error(`[BtccCustomFetcher] Failed to fetch price for ${pair}.`);
+            throw error;
+        }
+    }
+
     async fetchOrderBook(pair: string): Promise<any> { return {}; }
 }
