@@ -6,21 +6,22 @@ import os
 import subprocess
 import sys
 import time
+import fcntl
 from multiprocessing import cpu_count
 
 # --- Constants ---
 STATE_FILE = "key_search.state"
 LOG_FILE = "key_search.log"
-# Construct an absolute path to the worker script
 WORKER_SCRIPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "key_search_worker.py")
 
 # --- Configuration ---
-LOG_FORMAT = '%(asctime)s - %(message)s'
+LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 def setup_logging():
-    """Configures logging for the manager to file and console."""
+    """Configures logging for the manager."""
+    # Set the logging level for the root logger to DEBUG to capture all levels of messages.
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format=LOG_FORMAT,
         handlers=[
             logging.FileHandler(LOG_FILE),
@@ -29,7 +30,7 @@ def setup_logging():
     )
 
 def load_next_counter_from_state():
-    """Reads the state file to determine the starting counter for the next chunk."""
+    """Reads the state file to determine the starting counter."""
     if not os.path.exists(STATE_FILE):
         return 0
     try:
@@ -37,17 +38,16 @@ def load_next_counter_from_state():
             content = f.read().strip()
             return int(content) if content else 0
     except (ValueError, IOError) as e:
-        logging.warning(f"Could not read or parse state file '{STATE_FILE}': {e}. Starting from 0.")
+        logging.warning(f"Could not read state file '{STATE_FILE}': {e}. Starting from 0.")
         return 0
 
 def save_next_counter_to_state(counter):
-    """Saves the next counter to be assigned to the state file."""
+    """Saves the next counter to the state file."""
     try:
         with open(STATE_FILE, 'w') as f:
             f.write(str(counter))
     except IOError as e:
         logging.error(f"FATAL: Could not write to state file '{STATE_FILE}': {e}")
-        # This is a critical error, as we can no longer guarantee progress.
         sys.exit(1)
 
 def main():
@@ -55,9 +55,8 @@ def main():
     setup_logging()
 
     parser = argparse.ArgumentParser(description="Manager for the parallel key search.")
-    parser.add_argument("--chunk-size", type=int, default=10000000, help="The number of keys for each worker to search.")
-    parser.add_argument("--num-workers", type=int, default=cpu_count(), help="The number of worker processes to launch.")
-    parser.add_argument("--test-run", action="store_true", help="Run only one batch of workers for testing purposes.")
+    parser.add_argument("--chunk-size", type=int, default=10000000, help="Number of keys for each worker.")
+    parser.add_argument("--num-workers", type=int, default=cpu_count(), help="Number of worker processes.")
     args = parser.parse_args()
 
     if not os.path.exists(WORKER_SCRIPT_PATH):
@@ -67,38 +66,25 @@ def main():
     logging.info("--- LAUNCHING PARALLEL KEY SEARCH (OPERATION HYDRA) ---")
     logging.info(f"Configuration: {args.num_workers} workers, {args.chunk_size} keys/chunk")
 
-    processes = {}  # {worker_id: subprocess.Popen object}
+    processes = {}
     next_worker_id = 0
     next_counter = load_next_counter_from_state()
 
     try:
-        while True:  # Main dispatch and monitoring loop
+        while True:
             # 1. Clean up terminated processes
             for worker_id, process in list(processes.items()):
-                if process.poll() is not None:  # Process has finished
-                    logging.info(f"WORKER {worker_id} (PID: {process.pid}) finished with exit code {process.returncode}.")
-                    # Log any remaining output
-                    for line in process.stdout:
-                        logging.info(f"[WORKER {worker_id}] {line.strip()}")
-                    for line in process.stderr:
-                        logging.error(f"[WORKER {worker_id}] {line.strip()}")
+                if process.poll() is not None:
+                    logging.info(f"WORKER {worker_id} (PID: {process.pid}) finished with code {process.returncode}.")
                     del processes[worker_id]
 
-            # 2. Launch new workers in available slots
+            # 2. Launch new workers
             while len(processes) < args.num_workers:
                 start = next_counter
                 end = start + args.chunk_size
-
                 logging.info(f"Dispatching WORKER {next_worker_id} (Range: {start} to {end - 1})")
 
-                # In Python 3, it's good practice to close inherited file descriptors
-                # in the child process. The simplest way is to use `close_fds=True`.
-                # However, we can't do that when also redirecting stdout/stderr.
-                # The `preexec_fn` is a more targeted way to do this on Unix.
-                # It ensures the child doesn't hold onto the parent's logging file handlers,
-                # which is a common cause of deadlocks in this pattern.
                 def preexec_function():
-                    # Close all open file descriptors other than stdin, stdout, stderr
                     os.closerange(3, os.sysconf("SC_OPEN_MAX"))
 
                 process = subprocess.Popen(
@@ -106,53 +92,50 @@ def main():
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1,
                     preexec_fn=preexec_function
                 )
-                processes[next_worker_id] = process
 
-                # 3. Atomically update state for the *next* chunk
+                # Set the worker's stdout to be non-blocking
+                fd = process.stdout.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+                processes[next_worker_id] = process
                 next_counter = end
                 save_next_counter_to_state(next_counter)
-
                 next_worker_id += 1
 
-            # 4. Monitor output from running workers
+            logging.debug("Manager loop heartbeat. Checking workers...")
+
+            # 3. Monitor output from running workers (non-blocking)
             for worker_id, process in processes.items():
                 try:
-                    # Non-blocking read of stdout
-                    line = process.stdout.readline()
-                    if line:
+                    # Read all available lines from the non-blocking pipe
+                    for line in process.stdout:
                         line = line.strip()
-                        logging.info(f"[WORKER {worker_id}] {line}")
-                        if line.startswith("SUCCESS:"):
-                            private_key = line.split(" ", 1)[1]
-                            logging.info("!!!!!!!!!! GLOBAL SUCCESS !!!!!!!!!!!")
-                            logging.info(f"WINNING KEY FOUND BY WORKER {worker_id}: {private_key}")
-                            # Use KeyboardInterrupt to trigger the shutdown sequence
-                            raise KeyboardInterrupt
-                except (IOError, ValueError):
-                    # Pipe might be closed, poll() check will handle cleanup
+                        if line:
+                            logging.info(f"[WORKER {worker_id}] {line}")
+                            if line.startswith("SUCCESS:"):
+                                private_key = line.split(" ", 1)[1]
+                                logging.info("!!!!!!!!!! GLOBAL SUCCESS !!!!!!!!!!!")
+                                logging.info(f"WINNING KEY FOUND BY WORKER {worker_id}: {private_key}")
+                                raise KeyboardInterrupt
+                except (IOError, TypeError):
+                    # This is expected when the pipe is empty on a non-blocking read
                     continue
 
-            time.sleep(0.05)  # Small sleep to prevent a tight loop from consuming 100% CPU
-
-            # If this is a test run, exit after the first full batch of workers is launched.
-            if args.test_run and next_worker_id >= args.num_workers:
-                logging.info("Test run complete. Waiting for dispatched workers to finish...")
-                break # Exit the main 'while True' dispatch loop
+            time.sleep(1)  # Check for output every second
 
     except KeyboardInterrupt:
-        logging.info("\nTermination signal received. Shutting down all workers...")
-        for worker_id, process in processes.items():
-            if process.poll() is None: # Check if process is still running
-                logging.info(f"Terminating WORKER {worker_id} (PID: {process.pid})...")
+        logging.info("\nTermination signal received. Shutting down workers...")
+        for pid, process in processes.items():
+            if process.poll() is None:
+                logging.info(f"Terminating WORKER {pid} (PID: {process.pid})...")
                 process.terminate()
-        # Wait for all processes to terminate
         for process in processes.values():
             process.wait()
         logging.info("All workers terminated. Operation Hydra halted.")
         sys.exit(0)
     except Exception as e:
         logging.error(f"An unexpected error occurred in the manager: {e}", exc_info=True)
-        # Attempt a graceful shutdown
         for process in processes.values():
             process.terminate()
         sys.exit(1)
