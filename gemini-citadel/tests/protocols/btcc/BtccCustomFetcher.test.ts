@@ -1,7 +1,6 @@
 import { BtccCustomFetcher } from '../../../src/protocols/btcc/BtccCustomFetcher';
 import axios from 'axios';
 
-// Mock the axios module
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -10,59 +9,58 @@ describe('BtccCustomFetcher', () => {
 
   beforeEach(() => {
     fetcher = new BtccCustomFetcher();
+    mockedAxios.get.mockClear();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it('should fetch a price correctly', async () => {
+    const mockResponse = {
+      data: {
+        result: '52000.123',
+      },
+    };
+    mockedAxios.get.mockResolvedValue(mockResponse);
+
+    const price = await fetcher.fetchPrice('BTC/USDT');
+    expect(price).toBe(52000.123);
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      'https://spotapi2.btcccdn.com/btcc_api_trade/market/last',
+      { params: { market: 'BTCUSDT' } }
+    );
   });
 
-  describe('fetchPrice', () => {
-    it('should return the last price for a given pair on successful API call', async () => {
-      const mockPair = 'BTC/USDT';
-      const mockPrice = 50000.12;
-      const mockApiResponse = {
-        result: `${mockPrice}`, // The API returns the price as a string
-        error: null,
-        id: 0,
-        ttl: 400
-      };
+  it('should throw an error for an invalid pair format', async () => {
+    await expect(fetcher.fetchPrice('BTC-USDT')).rejects.toThrow('Invalid pair format: BTC-USDT');
+  });
 
-      mockedAxios.get.mockResolvedValue({ data: mockApiResponse });
+  it('should handle API errors gracefully', async () => {
+    const errorMessage = 'Network Error';
+    mockedAxios.get.mockRejectedValue(new Error(errorMessage));
+    await expect(fetcher.fetchPrice('BTC/USDT')).rejects.toThrow(errorMessage);
+  });
 
-      const price = await fetcher.fetchPrice(mockPair);
+  it('should handle unexpected response structure', async () => {
+    const mockResponse = {
+      data: {
+        // Missing 'result' field
+      },
+    };
+    mockedAxios.get.mockResolvedValue(mockResponse);
 
-      expect(price).toEqual(mockPrice);
-      expect(mockedAxios.get).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.get).toHaveBeenCalledWith(
-        expect.stringContaining('/btcc_api_trade/market/last'),
-        {
-          params: {
-            market: 'BTCUSDT',
-          },
-        },
-      );
-    });
+    await expect(fetcher.fetchPrice('BTC/USDT')).rejects.toThrow(
+      'Unexpected response structure for BTC/USDT.'
+    );
+  });
 
-    it('should throw an error if the API response has an unexpected structure', async () => {
-      const mockPair = 'BTC/USDT';
-      const mockApiResponse = {
-        result: { an: 'object' }, // Invalid structure
-        error: null,
-      };
+  it('should handle non-string result in response', async () => {
+    const mockResponse = {
+      data: {
+        result: 12345, // result is a number, not a string
+      },
+    };
+    mockedAxios.get.mockResolvedValue(mockResponse);
 
-      mockedAxios.get.mockResolvedValue({ data: mockApiResponse });
-
-      await expect(fetcher.fetchPrice(mockPair)).rejects.toThrow(
-        `Unexpected response structure for ${mockPair}.`
-      );
-    });
-
-    it('should re-throw an error if the axios request fails', async () => {
-      const mockPair = 'BTC/USDT';
-      const errorMessage = 'Network Error';
-      mockedAxios.get.mockRejectedValue(new Error(errorMessage));
-
-      await expect(fetcher.fetchPrice(mockPair)).rejects.toThrow(errorMessage);
-    });
+    await expect(fetcher.fetchPrice('BTC/USDT')).rejects.toThrow(
+      'Unexpected response structure for BTC/USDT.'
+    );
   });
 });

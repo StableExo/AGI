@@ -3,11 +3,13 @@ import { StrategyEngine } from '../src/services/strategy.service';
 import { ExecutionManager } from '../src/services/ExecutionManager';
 import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 import { FlashbotsService } from '../src/services/FlashbotsService';
+import { BtccCustomFetcher } from '../src/protocols/btcc/BtccCustomFetcher';
 
 // Mock the services
 jest.mock('../src/services/strategy.service');
 jest.mock('../src/services/ExecutionManager');
 jest.mock('../src/services/FlashbotsService');
+jest.mock('../src/protocols/btcc/BtccCustomFetcher');
 
 const mockFindOpportunities = jest.fn();
 const mockExecuteTrade = jest.fn();
