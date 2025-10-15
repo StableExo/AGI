@@ -26,3 +26,10 @@ pip-delete-this-directory.txt
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Temporary files
+*.state
+nohup.out
+*.report
+*.report.md
+*.txt
