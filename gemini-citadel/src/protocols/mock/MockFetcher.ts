@@ -9,6 +9,14 @@ export class MockFetcher implements IFetcher {
     }
 
     /**
+     * Sets the multiplier for the mock price calculation.
+     * @param multiplier The new multiplier value.
+     */
+    public setPriceMultiplier(multiplier: number): void {
+        this.multiplier = multiplier;
+    }
+
+    /**
      * Sets the base price that the mock fetcher will use for its calculations.
      * In a real scenario, this would be set by the StrategyEngine after fetching
      * the price from the primary exchange.

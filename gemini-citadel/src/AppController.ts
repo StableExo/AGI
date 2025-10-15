@@ -74,13 +74,10 @@ export class AppController {
   }
 
   public async start() {
-    // The main loop is temporarily disabled to allow for a clean,
-    // single-run test of the connection. To re-enable, uncomment the
-    // while(true) loop and the delay.
     console.log('[AppController] Starting main execution loop...');
-    // while (true) {
+    while (true) {
       await this.runSingleCycle();
-    //   await new Promise(resolve => setTimeout(resolve, LOOP_INTERVAL_MS));
-    // }
+      await new Promise(resolve => setTimeout(resolve, LOOP_INTERVAL_MS));
+    }
   }
 }

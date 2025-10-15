@@ -5,64 +5,63 @@ import axios from 'axios';
 import * as crypto from 'crypto';
 import { stringify } from 'querystring';
 
-const API_BASE_URL = 'https://spotapi2.btcccdn.com';
+const API_BASE_URL = 'https://api.btcc.com';
 
 export class BtccCustomFetcher implements IFetcher {
-    private readonly accessId: string; // This is your API Key
     private readonly secretKey: string; // This is your API Secret / Encryption key
 
     constructor() {
-        this.accessId = process.env.BTCC_API_KEY!;
         this.secretKey = process.env.BTCC_API_SECRET!;
 
-        if (!this.accessId || !this.secretKey) {
-            throw new Error("Missing BTCC_API_KEY or BTCC_API_SECRET in environment variables.");
+        if (!this.secretKey) {
+            throw new Error("Missing BTCC_API_SECRET in environment variables.");
         }
     }
 
     private generateSignature(params: Record<string, any>): string {
-        // Create a new object with the timestamp and access_id
-        const paramsWithAuth = {
-            ...params,
-            tm: Math.floor(Date.now() / 1000), // Timestamp in seconds
-            access_id: this.accessId,
-        };
+        // Step 1 & 2: Collect and sort parameters alphabetically
+        const sortedParams = Object.keys(params).sort().reduce(
+            (obj, key) => {
+                obj[key] = params[key];
+                return obj;
+            },
+            {} as Record<string, any>
+        );
 
-        // 1. Splice parameters (excluding secret_key for now)
-        const paramString = stringify(paramsWithAuth);
+        // Step 3: Create the pre-hash string from sorted params
+        const paramString = Object.entries(sortedParams).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&');
 
-        // 2. Splice the secret_key
-        const stringToSign = `${paramString}&secret_key=${this.secretKey}`;
-
-        // 3. Sort the final string alphabetically by key
-        const sortedString = stringToSign.split('&').sort().join('&');
-
-        // 4. Get the MD5 value
-        return crypto.createHash('md5').update(sortedString).digest('hex');
+        // Step 4: Generate MD5 hash
+        return crypto.createHash('md5').update(paramString).digest('hex');
     }
 
     // A private helper for making signed requests
     private async makeSignedRequest(method: 'GET' | 'POST', path: string, params: Record<string, any> = {}) {
-        const signature = this.generateSignature(params);
-        const headers = {
-            'authorization': signature
+        const paramsWithAuth = {
+            ...params,
+            secret_key: this.secretKey,
+            token: 'placeholder_token',
+            accountid: 'placeholder_accountid',
         };
 
-        // The signature function adds tm and access_id, so we need them in the final request
-        const finalParams = {
-            ...params,
-            tm: Math.floor(Date.now() / 1000),
-            access_id: this.accessId,
+        const signature = this.generateSignature(paramsWithAuth);
+
+        const finalParams: Record<string, any> = {
+            ...paramsWithAuth,
+            sign: signature,
         };
+
+        // The secret_key is NOT sent in the final request, only used for the signature.
+        delete finalParams.secret_key;
 
         const url = `${API_BASE_URL}${path}`;
 
         try {
             if (method === 'GET') {
-                const response = await axios.get(url, { headers, params: finalParams });
+                const response = await axios.get(url, { params: finalParams });
                 return response.data;
             } else { // POST
-                const response = await axios.post(url, finalParams, { headers });
+                const response = await axios.post(url, finalParams);
                 return response.data;
             }
         } catch (error: any) {
@@ -71,15 +70,28 @@ export class BtccCustomFetcher implements IFetcher {
         }
     }
 
+    // A private helper for making public, unsigned requests
+    private async makePublicRequest(path: string, params: Record<string, any> = {}) {
+        const url = `${API_BASE_URL}${path}`;
+        try {
+            const response = await axios.get(url, { params });
+            return response.data;
+        } catch (error: any) {
+            console.error(`[BtccCustomFetcher] API Request FAILED for GET ${path}:`, error.response ? error.response.data : error.message);
+            throw error;
+        }
+    }
+
     // A test function to query user assets, which requires a valid signature
     public async testConnection(): Promise<any> {
-        console.log('[BtccCustomFetcher] Testing connection by querying user assets...');
-        const assetData = await this.makeSignedRequest('GET', '/btcc_api_trade/asset/query');
-        if (assetData && assetData.error === null) {
-            console.log('[BtccCustomFetcher] Asset query successful!', assetData.result);
+        console.log('[BtccCustomFetcher] Testing connection by querying account info...');
+        // Using the path from the known-working example
+        const assetData = await this.makeSignedRequest('GET', '/api/v1/account');
+        if (assetData && assetData.code === 0) {
+            console.log('[BtccCustomFetcher] Account info query successful!', assetData.data);
             return assetData;
         } else {
-            throw new Error(`Failed to query assets: ${JSON.stringify(assetData)}`);
+            throw new Error(`Failed to query account info: ${JSON.stringify(assetData)}`);
         }
     }
 
@@ -89,18 +101,20 @@ export class BtccCustomFetcher implements IFetcher {
             console.log(`[BtccCustomFetcher] Fetching price for ${pair}...`);
             // The API likely expects the pair without any separators, e.g., "BTCUSDT"
             const symbol = pair.replace('/', '');
-            const data = await this.makeSignedRequest('GET', '/btcc_api_trade/market/detail', { symbol });
+            // Using the correct API path format and the public request method
+            const data = await this.makePublicRequest('/api/v1/market/detail', { symbol });
 
-            if (data && data.result && typeof data.result.Last === 'number') {
-                console.log(`[BtccCustomFetcher] Successfully fetched price for ${pair}: ${data.result.Last}`);
-                return data.result.Last;
+            // Adjusting response check for the new API version
+            if (data && data.data && typeof data.data.tick.Last === 'number') {
+                console.log(`[BtccCustomFetcher] Successfully fetched price for ${pair}: ${data.data.tick.Last}`);
+                return data.data.tick.Last;
             } else {
                 // Log the actual data received for diagnostics
                 console.error(`[BtccCustomFetcher] Unexpected response structure for ${pair}:`, data);
                 throw new Error(`Unexpected response structure for ${pair}.`);
             }
         } catch (error) {
-            // The makeSignedRequest method already logs the error, so we can just re-throw it.
+            // The makePublicRequest method already logs the error, so we can just re-throw it.
             console.error(`[BtccCustomFetcher] Failed to fetch price for ${pair}.`);
             throw error;
         }
