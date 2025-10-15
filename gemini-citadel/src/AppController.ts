@@ -12,6 +12,7 @@ import { BtccExecutor } from './protocols/btcc/BtccExecutor';
 import { MockExecutor } from './protocols/mock/MockExecutor';
 import { CoinbaseFetcher } from './protocols/coinbase/CoinbaseFetcher';
 import { CoinbaseExecutor } from './protocols/coinbase/CoinbaseExecutor';
+import { UniswapFetcher } from './protocols/uniswap/UniswapFetcher';
 
 const LOOP_INTERVAL_MS = 10000; // 10 seconds
 
@@ -44,6 +45,7 @@ export class AppController {
     // --- Protocol and Service Initialization ---
     const btccFetcher = new BtccCustomFetcher();
     const mockFetcher = new MockFetcher();
+    const uniswapFetcher = new UniswapFetcher();
     const btccExecutor = new BtccExecutor();
     const mockExecutor = new MockExecutor();
 
@@ -51,6 +53,7 @@ export class AppController {
       [
         { name: 'btcc', instance: btccFetcher, fee: 0.001 },
         { name: 'mockExchange', instance: mockFetcher, fee: 0.001 },
+        { name: 'uniswap', instance: uniswapFetcher, fee: 0.003 },
       ],
       [
         { name: 'btcc', instance: btccExecutor },
