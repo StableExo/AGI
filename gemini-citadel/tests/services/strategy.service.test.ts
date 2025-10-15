@@ -1,103 +1,87 @@
 import { StrategyEngine } from '../../src/services/strategy.service';
 import { ExchangeDataProvider } from '../../src/services/ExchangeDataProvider';
-import { BtccCustomFetcher } from '../../src/protocols/btcc/BtccCustomFetcher';
-import { MockFetcher } from '../../src/protocols/mock/MockFetcher';
-import { ITradeOpportunity } from '../../src/interfaces/ITradeOpportunity';
+import { ArbitrageOpportunity } from '../../src/models/ArbitrageOpportunity';
+import { IFetcher } from '../../src/interfaces/IFetcher';
 
-// Mock the fetcher modules
-jest.mock('../../src/protocols/btcc/BtccCustomFetcher');
-jest.mock('../../src/protocols/mock/MockFetcher');
+// Mocking the IFetcher interface for our tests
+class MockTestFetcher implements IFetcher {
+  constructor(private price: number) {}
+  async fetchPrice(pair: string): Promise<number> {
+    return this.price;
+  }
+  async fetchOrderBook(pair: string): Promise<any> {
+    // This is not used by the StrategyEngine, so we can return a mock value.
+    return { bids: [], asks: [] };
+  }
+}
 
 describe('StrategyEngine', () => {
-    let mockBtccFetcher: jest.Mocked<BtccCustomFetcher>;
-    let mockMockFetcher: jest.Mocked<MockFetcher>;
-    let dataProvider: ExchangeDataProvider;
-    let strategyEngine: StrategyEngine;
+  let strategyEngine: StrategyEngine;
+  let dataProvider: ExchangeDataProvider;
 
-    beforeEach(() => {
-        // Create new instances of the mocked fetchers for each test
-        mockBtccFetcher = new BtccCustomFetcher() as jest.Mocked<BtccCustomFetcher>;
-        mockMockFetcher = new MockFetcher() as jest.Mocked<MockFetcher>;
+  beforeEach(() => {
+    // We initialize a new ExchangeDataProvider for each test to ensure isolation.
+    // The fetchers and executors arrays are empty because we will mock the necessary methods.
+    dataProvider = new ExchangeDataProvider([], []);
+    strategyEngine = new StrategyEngine(dataProvider);
+  });
 
-        // Setup the data provider with the mocked fetchers and fees
-        dataProvider = new ExchangeDataProvider(
-            [
-                { name: 'btcc', instance: mockBtccFetcher, fee: 0.001 }, // 0.1% fee
-                { name: 'mockExchange', instance: mockMockFetcher, fee: 0.001 }, // 0.1% fee
-            ],
-            [] // No executors needed for this test
-        );
+  it('should identify a profitable arbitrage opportunity', async () => {
+    // Arrange: Set up a scenario where buying on exchangeA and selling on exchangeB is profitable.
+    const fetcherA = new MockTestFetcher(100); // Buy price
+    const fetcherB = new MockTestFetcher(105); // Sell price
+    const fetchers = new Map<string, IFetcher>([
+      ['exchangeA', fetcherA],
+      ['exchangeB', fetcherB],
+    ]);
+    jest.spyOn(dataProvider, 'getAllFetchers').mockReturnValue(fetchers);
+    jest.spyOn(dataProvider, 'getFee').mockReturnValue(0.001); // 0.1% fee
 
-        strategyEngine = new StrategyEngine(dataProvider);
+    // Act: Run the opportunity finding logic.
+    const opportunities = await strategyEngine.findOpportunities();
 
-        // Mock the implementation of setBasePrice for the MockFetcher
-        // This is a bit of a workaround because we are mocking the whole class.
-        // In a real scenario with more complex mocks, we might use jest.spyOn.
-        let basePrice = 0;
-        (mockMockFetcher.setBasePrice as jest.Mock).mockImplementation((price: number) => {
-            basePrice = price;
-        });
+    // Assert: Verify that one opportunity was found and its details are correct.
+    expect(opportunities).toHaveLength(1);
+    const opportunity = opportunities[0];
+    expect(opportunity).toBeInstanceOf(ArbitrageOpportunity);
+    // Profit = (105 - 100) - (100 * 0.001 + 105 * 0.001) = 5 - 0.205 = 4.795
+    expect(opportunity.estimatedProfit).toBeCloseTo(4.795);
+    expect(opportunity.actions[0].action).toBe('Buy');
+    expect(opportunity.actions[0].exchange).toBe('exchangeA');
+    expect(opportunity.actions[1].action).toBe('Sell');
+    expect(opportunity.actions[1].exchange).toBe('exchangeB');
+  });
 
-        // Ensure fetchPrice on the mock returns the basePrice * multiplier
-        (mockMockFetcher.fetchPrice as jest.Mock).mockImplementation(async (_pair: string) => {
-            return basePrice * 1.003; // Simulate a 0.3% higher price
-        });
-    });
+  it('should not identify an opportunity if the profit is below the threshold', async () => {
+    // Arrange: Set up a scenario where the spread is too small to be profitable after fees.
+    const fetcherA = new MockTestFetcher(100);
+    const fetcherB = new MockTestFetcher(100.1);
+    const fetchers = new Map<string, IFetcher>([
+      ['exchangeA', fetcherA],
+      ['exchangeB', fetcherB],
+    ]);
+    jest.spyOn(dataProvider, 'getAllFetchers').mockReturnValue(fetchers);
+    jest.spyOn(dataProvider, 'getFee').mockReturnValue(0.001);
 
-    it('should identify a profitable opportunity when spread exceeds fees', async () => {
-        // Arrange: BTCC price is 50000
-        mockBtccFetcher.fetchPrice.mockResolvedValue(50000);
+    // Act: Run the opportunity finding logic.
+    const opportunities = await strategyEngine.findOpportunities();
 
-        // Act
-        const opportunities = await strategyEngine.findOpportunities();
+    // Assert: Verify that no opportunity was found.
+    expect(opportunities).toHaveLength(0);
+  });
 
-        // Assert
-        expect(opportunities).toHaveLength(1);
-        const opportunity = opportunities[0];
-        expect(opportunity.type).toBe('Arbitrage');
+  it('should not identify an opportunity if there are not enough pricing sources', async () => {
+    // Arrange: Set up a scenario with only one fetcher.
+    const fetcherA = new MockTestFetcher(100);
+    const fetchers = new Map<string, IFetcher>([
+      ['exchangeA', fetcherA],
+    ]);
+    jest.spyOn(dataProvider, 'getAllFetchers').mockReturnValue(fetchers);
 
-        // 50000 * 1.003 = 50150. Spread = 150.
-        // Fees = (50000 * 0.001) + (50150 * 0.001) = 50 + 50.15 = 100.15
-        // Profit = 150 - 100.15 = 49.85
-        expect(opportunity.estimatedProfit).toBeCloseTo(49.85);
-        expect(opportunity.actions).toHaveLength(2);
+    // Act: Run the opportunity finding logic.
+    const opportunities = await strategyEngine.findOpportunities();
 
-        const buyAction = opportunity.actions.find(a => a.action === 'Buy');
-        const sellAction = opportunity.actions.find(a => a.action === 'Sell');
-
-        expect(buyAction?.exchange).toBe('btcc');
-        expect(buyAction?.price).toBe(50000);
-        expect(sellAction?.exchange).toBe('mockExchange');
-        expect(sellAction?.price).toBeCloseTo(50150);
-    });
-
-    it('should NOT identify an opportunity when spread is less than fees', async () => {
-        // Arrange: Modify the mock fetcher to return a smaller spread
-        (mockMockFetcher.fetchPrice as jest.Mock).mockImplementation(async (_pair: string) => {
-            // Price is only 0.15% higher, spread (75) should be less than fees (~100)
-            const basePrice = (await mockBtccFetcher.fetchPrice(_pair));
-            return basePrice * 1.0015;
-        });
-        mockBtccFetcher.fetchPrice.mockResolvedValue(50000);
-
-        // Act
-        const opportunities = await strategyEngine.findOpportunities();
-
-        // Assert
-        expect(opportunities).toHaveLength(0);
-    });
-
-    it('should NOT identify an opportunity when there is no price difference', async () => {
-        // Arrange: Modify the mock fetcher to return the same price
-        (mockMockFetcher.fetchPrice as jest.Mock).mockImplementation(async (_pair: string) => {
-            return mockBtccFetcher.fetchPrice(_pair);
-        });
-        mockBtccFetcher.fetchPrice.mockResolvedValue(50000);
-
-        // Act
-        const opportunities = await strategyEngine.findOpportunities();
-
-        // Assert
-        expect(opportunities).toHaveLength(0);
-    });
+    // Assert: Verify that no opportunity was found.
+    expect(opportunities).toHaveLength(0);
+  });
 });

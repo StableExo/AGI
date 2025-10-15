@@ -1,5 +1,5 @@
 import { IExecutor } from '../../interfaces/IExecutor';
-import { ITradeAction } from '../../interfaces/ITradeOpportunity';
+import { ITradeAction } from '../../interfaces/ITradeAction';
 import { ITradeReceipt } from '../../interfaces/ITradeReceipt';
 
 export class MockExecutor implements IExecutor {
