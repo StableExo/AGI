@@ -10,6 +10,8 @@ import { BtccCustomFetcher } from './protocols/btcc/BtccCustomFetcher';
 import { MockFetcher } from './protocols/mock/MockFetcher';
 import { BtccExecutor } from './protocols/btcc/BtccExecutor';
 import { MockExecutor } from './protocols/mock/MockExecutor';
+import { CoinbaseFetcher } from './protocols/coinbase/CoinbaseFetcher';
+import { CoinbaseExecutor } from './protocols/coinbase/CoinbaseExecutor';
 
 const LOOP_INTERVAL_MS = 10000; // 10 seconds
 
