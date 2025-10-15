@@ -1,123 +1,114 @@
+import { Wallet, ethers } from 'ethers';
 import { ExecutionManager } from '../../src/services/ExecutionManager';
-import { ExchangeDataProvider } from '../../src/services/ExchangeDataProvider';
-import { MockExecutor } from '../../src/protocols/mock/MockExecutor';
+import { FlashbotsService } from '../../src/services/FlashbotsService';
 import { ArbitrageOpportunity } from '../../src/models/ArbitrageOpportunity';
-import { ITradeAction } from '../../src/interfaces/ITradeAction';
+import { ITradeAction, ISwapStep } from '../../src/interfaces/ITradeAction';
 
-// Mock the ExchangeDataProvider
-jest.mock('../../src/services/ExchangeDataProvider');
+// Mock the FlashbotsService
+jest.mock('../../src/services/FlashbotsService');
 
 describe('ExecutionManager', () => {
   let executionManager: ExecutionManager;
-  let mockDataProvider: jest.Mocked<ExchangeDataProvider>;
-  let mockSuccessExecutor: MockExecutor;
-  let mockFailureExecutor: MockExecutor;
+  let mockFlashbotsService: jest.Mocked<FlashbotsService>;
+  let mockSigner: Wallet;
 
-  // Define a mock pair string, as required by the ITradeAction interface
-  const MOCK_PAIR = 'BTC/USDT';
+  const MOCK_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890';
+  const MOCK_POOL_ADDRESS = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
+  const MOCK_TOKEN_ADDRESS = '0x0987654321098765432109876543210987654321';
 
   beforeEach(() => {
-    // Reset mocks before each test
     jest.clearAllMocks();
 
-    // Create a mock that successfully returns a receipt
-    mockSuccessExecutor = new MockExecutor();
-    jest.spyOn(mockSuccessExecutor, 'placeOrder').mockResolvedValue({
-      success: true,
-      orderId: 'mock-success-123',
-      filledAmount: 1,
-    });
+    // We need a mock signer with a provider to get chainId
+    const mockProvider = {
+      getBlockNumber: jest.fn().mockResolvedValue(12345),
+      getNetwork: jest.fn().mockResolvedValue({ chainId: 1 }),
+    };
+    mockSigner = new Wallet(ethers.Wallet.createRandom().privateKey, mockProvider as any);
 
-    // Create a mock that simulates a failed order
-    mockFailureExecutor = new MockExecutor();
-    jest.spyOn(mockFailureExecutor, 'placeOrder').mockResolvedValue({
-      success: false,
-      orderId: 'mock-fail-456',
-      filledAmount: 0,
-      message: 'Insufficient funds',
-    });
+    // Mock FlashbotsService
+    mockFlashbotsService = new (FlashbotsService as any)(null, null);
+    mockFlashbotsService.sendBundle = jest.fn();
 
-    // We instantiate the mock of ExchangeDataProvider, not the real class
-    mockDataProvider = new (ExchangeDataProvider as jest.Mock<ExchangeDataProvider>)() as any;
-
-    // Set up the mock getExecutor to return our mock executors
-    mockDataProvider.getExecutor.mockImplementation((name: string) => {
-      if (name === 'exchange-success') return mockSuccessExecutor;
-      if (name === 'exchange-fail') return mockFailureExecutor;
-      return undefined;
-    });
-
-    // Instantiate the ExecutionManager with the mocked provider
-    executionManager = new ExecutionManager(mockDataProvider);
+    // Instantiate the ExecutionManager with mocks
+    executionManager = new ExecutionManager(mockFlashbotsService, mockSigner);
   });
 
-  it('should successfully execute a valid trade opportunity', async () => {
-    const opportunity = new ArbitrageOpportunity(
-      1,
-      { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-      { exchange: 'exchange-success', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
-    );
+  const createMockOpportunity = (): ArbitrageOpportunity => {
+    const swapStep: ISwapStep = {
+      dexType: 0,
+      tokenIn: MOCK_TOKEN_ADDRESS,
+      tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH Address
+      minAmountOut: 100,
+      poolOrRouter: MOCK_POOL_ADDRESS,
+      poolFee: 3000,
+    };
 
-    const receipts = await executionManager.executeTrade(opportunity);
+    const action: ITradeAction = {
+      action: 'Buy',
+      exchange: 'UniswapV3',
+      pair: 'WETH/DAI',
+      price: 1500,
+      amount: 1,
+      onChainData: swapStep,
+    };
 
-    expect(receipts).toHaveLength(2);
-    expect(receipts[0].success).toBe(true);
-    expect(receipts[1].success).toBe(true);
-    expect(mockDataProvider.getExecutor).toHaveBeenCalledTimes(2);
-    expect(mockSuccessExecutor.placeOrder).toHaveBeenCalledTimes(2);
+    const opportunity = new ArbitrageOpportunity(25, [action]);
+    opportunity.setFlashLoanDetails(MOCK_POOL_ADDRESS, MOCK_TOKEN_ADDRESS, 1000);
+    return opportunity;
+  };
+
+  it('should successfully submit a trade to the FlashbotsService', async () => {
+    const opportunity = createMockOpportunity();
+    (mockFlashbotsService.sendBundle as jest.Mock).mockResolvedValue(true);
+
+    const wasIncluded = await executionManager.executeTrade(opportunity, MOCK_CONTRACT_ADDRESS);
+
+    expect(wasIncluded).toBe(true);
+    expect(mockFlashbotsService.sendBundle).toHaveBeenCalledTimes(1);
+    const bundle = (mockFlashbotsService.sendBundle as jest.Mock).mock.calls[0][0];
+    expect(bundle).toHaveLength(1);
+    expect(bundle[0].transaction.to).toEqual(MOCK_CONTRACT_ADDRESS);
+    expect(bundle[0].signer).toBe(mockSigner);
   });
 
-  it('should throw a critical error if a second action fails (Halt and Alert)', async () => {
-    const opportunity = new ArbitrageOpportunity(
-      1,
-      { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-      { exchange: 'exchange-fail', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
-    );
+  it('should return false if the Flashbots bundle is not included', async () => {
+    const opportunity = createMockOpportunity();
+    (mockFlashbotsService.sendBundle as jest.Mock).mockResolvedValue(false);
 
-    // We expect the executeTrade function to throw an error
-    await expect(executionManager.executeTrade(opportunity)).rejects.toThrow(
-      /CRITICAL: Legged trade!/
-    );
+    const wasIncluded = await executionManager.executeTrade(opportunity, MOCK_CONTRACT_ADDRESS);
 
-    // Verify that the first action was attempted, but the second one failed and halted everything
-    expect(mockDataProvider.getExecutor).toHaveBeenCalledTimes(2);
-    expect(mockSuccessExecutor.placeOrder).toHaveBeenCalledTimes(1); // First action succeeds
-    expect(mockFailureExecutor.placeOrder).toHaveBeenCalledTimes(1); // Second action fails
+    expect(wasIncluded).toBe(false);
+    expect(mockFlashbotsService.sendBundle).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw an error if no executor is found for an exchange', async () => {
-    const opportunity = new ArbitrageOpportunity(
-      1,
-      { exchange: 'non-existent-exchange', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-      // A valid opportunity must have two actions
-      { exchange: 'exchange-success', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
+  it('should return false and log an error if FlashbotsService throws an error', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const testError = new Error('Flashbots relay error');
+    const opportunity = createMockOpportunity();
+    (mockFlashbotsService.sendBundle as jest.Mock).mockRejectedValue(testError);
+
+    const wasIncluded = await executionManager.executeTrade(opportunity, MOCK_CONTRACT_ADDRESS);
+
+    expect(wasIncluded).toBe(false);
+    expect(mockFlashbotsService.sendBundle).toHaveBeenCalledTimes(1);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      `[ExecutionManager] CRITICAL: Failed to submit Flashbots bundle. Error: ${testError.message}`
     );
 
-    await expect(executionManager.executeTrade(opportunity)).rejects.toThrow(
-      /CRITICAL: No executor found for exchange: "non-existent-exchange"/
-    );
+    consoleErrorSpy.mockRestore();
   });
 
-  // This test doesn't directly test the BtccExecutor's internal logic,
-  // but it ensures the overall flow can be tested with a dry-run like executor.
-  it('should correctly handle executors that return dry-run receipts', async () => {
-    // Configure the success executor to return a "dry run" style message
-    jest.spyOn(mockSuccessExecutor, 'placeOrder').mockResolvedValue({
-      success: true,
-      orderId: 'dry-run-789',
-      filledAmount: 1,
-      message: 'Dry run execution successful.',
-    });
+  it('should throw an error if an action is missing onChainData', async () => {
+    const opportunity = createMockOpportunity();
+    opportunity.actions[0].onChainData = undefined; // Remove essential data
 
-    const opportunity = new ArbitrageOpportunity(
-      1,
-      { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-      { exchange: 'exchange-success', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
-    );
-
-    const receipts = await executionManager.executeTrade(opportunity);
-    expect(receipts).toHaveLength(2);
-    expect(receipts[0].success).toBe(true);
-    expect(receipts[0].message).toContain('Dry run');
+    // Using a try-catch block to assert the error message
+    try {
+      await executionManager.executeTrade(opportunity, MOCK_CONTRACT_ADDRESS);
+      fail('Expected executeTrade to throw an error but it did not.');
+    } catch (e: any) {
+      expect(e.message).toContain('Action is missing on-chain data');
+    }
   });
 });

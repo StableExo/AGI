@@ -15,4 +15,5 @@ export interface ITradeAction {
   pair: string;
   price: number;
   amount: number;
+  onChainData?: ISwapStep;
 }

@@ -1,25 +1,18 @@
+import { ethers, Interface, Wallet, BigNumberish, AbiCoder } from 'ethers';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
-import { ExchangeDataProvider } from './ExchangeDataProvider';
+import { FlashbotsService } from './FlashbotsService';
 import { ITradeReceipt } from '../interfaces/ITradeReceipt';
 import { FlashSwap__factory } from '../../typechain-types'; // Correct path to generated types
+import { ISwapStep } from '../interfaces/ITradeAction';
 
 // Define the structure for the contract's ArbParams
 // This must match the struct in FlashSwap.sol
 interface IArbParams {
   initiator: string;
   titheRecipient: string;
-  titheBps: ethers.BigNumberish;
+  titheBps: BigNumberish;
   isGasEstimation: boolean;
   path: ISwapStep[];
-}
-
-interface ISwapStep {
-  dexType: number;
-  tokenIn: string;
-  tokenOut: string;
-  minAmountOut: ethers.BigNumberish;
-  poolOrRouter: string;
-  poolFee: number;
 }
 
 export class ExecutionManager {
@@ -41,39 +34,57 @@ export class ExecutionManager {
    * @param flashSwapContractAddress - The address of the deployed FlashSwap contract.
    * @returns A promise that resolves with a boolean indicating if the bundle was included.
    */
-  public async executeTrade(opportunity: ArbitrageOpportunity): Promise<ITradeReceipt[]> {
-    const receipts: ITradeReceipt[] = [];
+  public async executeTrade(
+    opportunity: ArbitrageOpportunity,
+    flashSwapContractAddress: string
+  ): Promise<boolean> {
+    console.log(`[ExecutionManager] Received opportunity for Flashbots execution: ${opportunity.getSummary()}`);
 
-    console.log(`[ExecutionManager] Received trade to execute: ${opportunity.getSummary()}`);
+    if (!this.executionSigner.provider) {
+      throw new Error("Execution signer must have a provider.");
+    }
 
-    for (const action of opportunity.actions) {
-      const executor = this.dataProvider.getExecutor(action.exchange);
+    // 1. Prepare the parameters for the smart contract call
+    const arbParams: IArbParams = {
+      initiator: this.executionSigner.address,
+      titheRecipient: '0x000000000000000000000000000000000000dEaD', // Placeholder
+      titheBps: 0, // Placeholder
+      isGasEstimation: false,
+      path: this.mapActionsToSwapSteps(opportunity),
+    };
 
     // 2. Encode the calldata for the initiateUniswapV3FlashLoan function
     const encodedArbParams = this.flashSwapInterface.encodeFunctionData('initiateUniswapV3FlashLoan', [
       opportunity.flashLoanPool,
       opportunity.flashLoanToken,
       opportunity.flashLoanAmount,
-      ethers.utils.defaultAbiCoder.encode(
+      AbiCoder.defaultAbiCoder().encode(
         ['(address,address,uint256,bool,(uint8,address,address,uint256,address,uint24)[])'],
         [[
           arbParams.initiator,
           arbParams.titheRecipient,
           arbParams.titheBps,
           arbParams.isGasEstimation,
-          arbParams.path
+          arbParams.path.map(step => [
+            step.dexType,
+            step.tokenIn,
+            step.tokenOut,
+            step.minAmountOut,
+            step.poolOrRouter,
+            step.poolFee,
+          ]),
         ]]
       )
     ]);
 
     // 3. Construct the transaction
+    const network = await this.executionSigner.provider.getNetwork();
     const transaction = {
       to: flashSwapContractAddress,
       data: encodedArbParams,
       value: '0',
-      gasLimit: ethers.BigNumber.from(1000000), // High gas limit for safety
-      chainId: (await this.executionSigner.getChainId()),
-      signer: this.executionSigner,
+      gasLimit: 1000000n, // High gas limit for safety
+      chainId: network.chainId,
     };
 
     // 4. Submit the transaction as a bundle to Flashbots
@@ -82,7 +93,10 @@ export class ExecutionManager {
       const targetBlock = blockNumber + 1; // Target the next block
 
       console.log(`[ExecutionManager] Submitting Flashbots bundle for target block: ${targetBlock}`);
-      const wasIncluded = await this.flashbotsService.sendBundle([transaction], targetBlock);
+      const wasIncluded = await this.flashbotsService.sendBundle(
+        [{ signer: this.executionSigner, transaction: transaction }],
+        targetBlock
+      );
 
       if (wasIncluded) {
         console.log(`[ExecutionManager] SUCCESS: Flashbots bundle was included in block ${targetBlock}.`);

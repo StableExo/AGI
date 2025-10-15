@@ -1,7 +1,9 @@
 import 'dotenv/config';
+import { Wallet, JsonRpcProvider } from 'ethers';
 import { StrategyEngine } from './services/strategy.service';
 import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
+import { FlashbotsService } from './services/FlashbotsService';
 
 // Import protocol modules
 import { BtccCustomFetcher } from './protocols/btcc/BtccCustomFetcher';
@@ -15,45 +17,62 @@ export class AppController {
   private readonly exchangeDataProvider: ExchangeDataProvider;
   private readonly executionManager: ExecutionManager;
   private readonly strategyEngine: StrategyEngine;
+  private readonly flashbotsService: FlashbotsService;
 
-  constructor() {
+  private constructor(
+    dataProvider: ExchangeDataProvider,
+    executionManager: ExecutionManager,
+    strategyEngine: StrategyEngine,
+    flashbotsService: FlashbotsService
+  ) {
+    this.exchangeDataProvider = dataProvider;
+    this.executionManager = executionManager;
+    this.strategyEngine = strategyEngine;
+    this.flashbotsService = flashbotsService;
+  }
+
+  public static async create(): Promise<AppController> {
     console.log('[AppController] Initializing...');
+    this.validateEnvVars();
+
+    // --- Core Infrastructure Initialization ---
+    const provider = new JsonRpcProvider(process.env.RPC_URL!);
+    const executionSigner = new Wallet(process.env.EXECUTION_PRIVATE_KEY!, provider);
 
     // --- Protocol and Service Initialization ---
-
-    // 1. Initialize Protocol Modules
     const btccFetcher = new BtccCustomFetcher();
     const mockFetcher = new MockFetcher();
     const btccExecutor = new BtccExecutor();
     const mockExecutor = new MockExecutor();
 
-    // 2. Initialize Data Provider
-    this.exchangeDataProvider = new ExchangeDataProvider(
+    const dataProvider = new ExchangeDataProvider(
       [
         { name: 'btcc', instance: btccFetcher, fee: 0.001 },
-        { name: 'mockExchange', instance: mockFetcher, fee: 0.001 }
+        { name: 'mockExchange', instance: mockFetcher, fee: 0.001 },
       ],
       [
         { name: 'btcc', instance: btccExecutor },
-        { name: 'mockExchange', instance: mockExecutor }
+        { name: 'mockExchange', instance: mockExecutor },
       ]
     );
 
-    // 3. Initialize Execution Manager
-    this.executionManager = new ExecutionManager(this.exchangeDataProvider);
+    const flashbotsService = new FlashbotsService(provider, executionSigner);
+    await flashbotsService.initialize();
 
-    // 3. Initialize Strategy Engine
-    // The old pool config loading is removed for now, as the strategy engine
-    // will be simplified to use the new data provider.
-    this.strategyEngine = new StrategyEngine(this.exchangeDataProvider);
+    const executionManager = new ExecutionManager(flashbotsService, executionSigner);
+    const strategyEngine = new StrategyEngine(dataProvider);
 
     console.log('[AppController] Initialization complete.');
+    return new AppController(dataProvider, executionManager, strategyEngine, flashbotsService);
   }
 
-  /**
-   * Runs a single analysis and execution cycle.
-   * This method is public to allow for granular testing.
-   */
+  private static validateEnvVars(): void {
+    if (!process.env.RPC_URL) throw new Error('RPC_URL must be set.');
+    if (!process.env.EXECUTION_PRIVATE_KEY) throw new Error('EXECUTION_PRIVATE_KEY must be set.');
+    if (!process.env.FLASHBOTS_AUTH_KEY) throw new Error('FLASHBOTS_AUTH_KEY must be set.');
+    if (!process.env.FLASH_SWAP_CONTRACT_ADDRESS) throw new Error('FLASH_SWAP_CONTRACT_ADDRESS must be set.');
+  }
+
   public async runSingleCycle(): Promise<void> {
     try {
       console.log(`[AppController] [${new Date().toISOString()}] Starting analysis cycle...`);
@@ -61,8 +80,11 @@ export class AppController {
 
       if (opportunities.length > 0) {
         console.log(`[AppController] [${new Date().toISOString()}] Found ${opportunities.length} opportunities. Executing...`);
-        // The new execution manager will handle the trade execution.
-        await Promise.all(opportunities.map(opp => this.executionManager.executeTrade(opp)));
+        await Promise.all(
+          opportunities.map(opp =>
+            this.executionManager.executeTrade(opp, process.env.FLASH_SWAP_CONTRACT_ADDRESS!)
+          )
+        );
       } else {
         console.log(`[AppController] [${new Date().toISOString()}] No opportunities found in this cycle.`);
       }
@@ -75,9 +97,8 @@ export class AppController {
 
   public async start() {
     console.log('[AppController] Starting main execution loop...');
-    while (true) {
-      await this.runSingleCycle();
-      await new Promise(resolve => setTimeout(resolve, LOOP_INTERVAL_MS));
-    }
+    // Perform an immediate run on startup, then enter the loop.
+    await this.runSingleCycle();
+    setInterval(() => this.runSingleCycle(), LOOP_INTERVAL_MS);
   }
 }

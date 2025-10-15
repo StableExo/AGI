@@ -94,7 +94,7 @@ export class StrategyEngine {
           price: sellPrice,
           amount: TRADE_AMOUNT
         };
-        const opportunity = new ArbitrageOpportunity(estimatedProfit, buyAction, sellAction);
+        const opportunity = new ArbitrageOpportunity(estimatedProfit, [buyAction, sellAction]);
         opportunities.push(opportunity);
       }
     }
