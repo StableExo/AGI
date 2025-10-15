@@ -1,111 +1,111 @@
-import { Pool } from '../interfaces/Pool';
-import { Price, Token, Fraction } from '@uniswap/sdk-core';
-import { DataService } from './data.service';
+import { ExchangeDataProvider } from './ExchangeDataProvider';
+import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
+import { ITradeAction } from '../interfaces/ITradeAction';
+import { IFetcher } from '../interfaces/IFetcher';
 
-// Define the structure of the pool configuration from pools.config.json
-interface PoolConfig {
-  name: string;
-  address: string;
-  tokenA: string;
-  tokenB: string;
-  fee: number;
-}
-
-export interface Opportunity {
-  type: 'arbitrage';
-  profit: number; // Represents the percentage difference
-  path: [Pool, Pool]; // A clear path from low price pool to high price pool
-}
+// Configuration for the strategy engine.
+// In a real-world scenario, this would be in a dedicated config file.
+const MIN_PROFIT_THRESHOLD = 0.001; // Minimum profit to consider a trade (e.g., 0.1%)
+const TRADE_AMOUNT = 1; // The amount of the base currency to trade.
 
 export class StrategyEngine {
-  private dataService: DataService;
-  private poolsConfig: PoolConfig[];
+  private dataProvider: ExchangeDataProvider;
 
-  constructor(dataService: DataService, poolsConfig: PoolConfig[]) {
+  constructor(dataProvider: ExchangeDataProvider) {
+    this.dataProvider = dataProvider;
     console.log('[StrategyEngine] Initialized.');
-    this.dataService = dataService;
-    this.poolsConfig = poolsConfig;
   }
 
-  private getPoolPrice(pool: Pool): Price<Token, Token> {
-    const token0 = new Token(1, pool.token0.address, pool.token0.decimals, pool.token0.symbol);
-    const token1 = new Token(1, pool.token1.address, pool.token1.decimals, pool.token1.symbol);
+  /**
+   * Analyzes market data to find profitable arbitrage opportunities.
+   * This new logic is adapted from AxionCitadel's SpatialArbEngine.
+   * It dynamically compares all available data sources for the same trading pair.
+   * @returns A promise that resolves to an array of trade opportunities.
+   */
+  public async findOpportunities(): Promise<ArbitrageOpportunity[]> {
+    console.log('[StrategyEngine] Analyzing markets for opportunities...');
+    const opportunities: ArbitrageOpportunity[] = [];
+    const fetchers = this.dataProvider.getAllFetchers();
 
-    // Uniswap SDK price is token1 / token0. The price is represented as a fraction.
-    // The pool's sqrtPriceX96 is a Q64.96 fixed-point number.
-    // price = (sqrtPriceX96 / 2^96)^2
-    // To avoid floating point issues, we work with the squared value.
-    // price = sqrtPriceX96^2 / (2^96)^2 = sqrtPriceX96^2 / 2^192
-    // The Price constructor takes the numerator and denominator.
-    return new Price(
-      token0,
-      token1,
-      (1n << 192n).toString(), // Denominator: 2^192
-      (pool.sqrtPriceX96 * pool.sqrtPriceX96).toString() // Numerator: sqrtPriceX96^2
-    );
-  }
+    // In this simplified version, we'll assume all fetchers trade the same pair.
+    // A more advanced implementation would group fetchers by the pairs they support.
+    const tradingPairMap: Record<string, string> = {
+        'btcc': 'BTC/USDT',
+        'coinbase': 'BTC-USD',
+        'mockExchange': 'BTC-USD'
+    };
 
-  // This internal method contains the original analysis logic
-  private analyzePools(pools: Pool[]): Opportunity[] {
-    console.log(`[StrategyEngine] Analyzing ${pools.length} pools for opportunities...`);
-    const opportunities: Opportunity[] = [];
-
-    if (pools.length < 2) {
-      console.log('[StrategyEngine] Not enough pools to analyze for arbitrage.');
-      return opportunities;
-    }
-
-    for (let i = 0; i < pools.length; i++) {
-      for (let j = i + 1; j < pools.length; j++) {
-        const poolA = pools[i];
-        const poolB = pools[j];
-
-        const samePair = (poolA.token0.address === poolB.token0.address && poolA.token1.address === poolB.token1.address) ||
-                         (poolA.token0.address === poolB.token1.address && poolA.token1.address === poolB.token0.address);
-
-        if (samePair) {
-          const priceA = this.getPoolPrice(poolA);
-          const priceB = this.getPoolPrice(poolB);
-
-          if (priceA.equalTo(priceB)) continue;
-
-          // Use robust fractional math for comparison
-          const priceDifference = priceA.greaterThan(priceB)
-            ? priceA.subtract(priceB).divide(priceB)
-            : priceB.subtract(priceA).divide(priceA);
-
-          const threshold = new Fraction(1, 1000); // 0.1% arbitrage threshold
-
-          if (priceDifference.greaterThan(threshold)) {
-            console.log(`!!! Potential Arbitrage Found for pair ${poolA.token0.symbol}/${poolA.token1.symbol} between pools ${poolA.address} and ${poolB.address}`);
-            console.log(`    Price A: ${priceA.toSignificant(6)}, Price B: ${priceB.toSignificant(6)}, Difference: ${priceDifference.toFixed(4)}%`);
-
-            // Sort the path by price to create a clear "buy low, sell high" path
-            const path: [Pool, Pool] = priceA.lessThan(priceB) ? [poolA, poolB] : [poolB, poolA];
-
-            opportunities.push({
-              type: 'arbitrage',
-              profit: parseFloat(priceDifference.toSignificant(4)),
-              path: path
-            });
-          }
+    const prices: { name: string, price: number, fee: number }[] = [];
+    for (const [name, fetcher] of fetchers.entries()) {
+        const tradingPair = tradingPairMap[name];
+        if (!tradingPair) {
+            console.warn(`[StrategyEngine] No trading pair configured for ${name}. Skipping.`);
+            continue;
         }
-      }
+        const price = await fetcher.fetchPrice(tradingPair);
+        const fee = this.dataProvider.getFee(name);
+        if (fee !== undefined) {
+            prices.push({ name, price, fee });
+        }
     }
+
+    if (prices.length < 2) {
+        console.log('[StrategyEngine] Not enough pricing sources to find an arbitrage opportunity.');
+        return [];
+    }
+
+    // Compare every source with every other source
+    for (let i = 0; i < prices.length; i++) {
+        for (let j = i + 1; j < prices.length; j++) {
+            const sourceA = prices[i];
+            const sourceB = prices[j];
+
+            // Opportunity: Buy on A, Sell on B
+            this.evaluateOpportunity(sourceA, sourceB, tradingPairMap, opportunities);
+
+            // Opportunity: Buy on B, Sell on A
+            this.evaluateOpportunity(sourceB, sourceA, tradingPairMap, opportunities);
+        }
+    }
+
     return opportunities;
   }
 
-  public async findOpportunities(): Promise<Opportunity[]> {
-    console.log(`[StrategyEngine] Fetching live data for ${this.poolsConfig.length} configured pools...`);
-    try {
-      const poolDataPromises = this.poolsConfig.map(p => this.dataService.getV3PoolData(p.address));
-      const pools = await Promise.all(poolDataPromises);
-      console.log(`[StrategyEngine] Successfully fetched data for ${pools.length} pools.`);
-      return this.analyzePools(pools);
-    } catch (error) {
-      console.error('[StrategyEngine] Failed to fetch pool data.', error);
-      // Re-throw the error to be caught by the AppController's loop
-      throw error;
+  private evaluateOpportunity(
+    buySource: { name: string, price: number, fee: number },
+    sellSource: { name: string, price: number, fee: number },
+    pairMap: Record<string, string>,
+    opportunities: ArbitrageOpportunity[]
+  ) {
+    const buyPrice = buySource.price;
+    const sellPrice = sellSource.price;
+
+    if (sellPrice > buyPrice) {
+      const spread = sellPrice - buyPrice;
+      const totalFees = (buyPrice * buySource.fee) + (sellPrice * sellSource.fee);
+      const estimatedProfit = (spread - totalFees) * TRADE_AMOUNT;
+
+      console.log(`[StrategyEngine] Evaluating: Buy on ${buySource.name} (${buyPrice}), Sell on ${sellSource.name} (${sellPrice}). Profit: ${estimatedProfit}`);
+
+      if (estimatedProfit > (buyPrice * MIN_PROFIT_THRESHOLD)) {
+        console.log(`[StrategyEngine] Profitable opportunity found!`);
+        const buyAction: ITradeAction = {
+          action: 'Buy',
+          exchange: buySource.name,
+          pair: pairMap[buySource.name],
+          price: buyPrice,
+          amount: TRADE_AMOUNT
+        };
+        const sellAction: ITradeAction = {
+          action: 'Sell',
+          exchange: sellSource.name,
+          pair: pairMap[sellSource.name],
+          price: sellPrice,
+          amount: TRADE_AMOUNT
+        };
+        const opportunity = new ArbitrageOpportunity(estimatedProfit, [buyAction, sellAction]);
+        opportunities.push(opportunity);
+      }
     }
   }
 }

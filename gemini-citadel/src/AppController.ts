@@ -1,83 +1,110 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import 'dotenv/config';
-import { DataService } from './services/data.service';
+import { Wallet, JsonRpcProvider } from 'ethers';
 import { StrategyEngine } from './services/strategy.service';
+import { ExchangeDataProvider } from './services/ExchangeDataProvider';
+import { ExecutionManager } from './services/ExecutionManager';
+import { FlashbotsService } from './services/FlashbotsService';
 
-// The structure of the configuration object expected by the StrategyEngine constructor.
-interface StrategyPoolConfig {
-  name: string;
-  address: string;
-  tokenA: string;
-  tokenB: string;
-  fee: number;
-}
-
-// The structure of the pool groups as defined in pools.config.json
-interface PoolConfigGroup {
-  name: string;
-  pools: string[];
-}
+// Import protocol modules
+import { BtccCustomFetcher } from './protocols/btcc/BtccCustomFetcher';
+import { MockFetcher } from './protocols/mock/MockFetcher';
+import { BtccExecutor } from './protocols/btcc/BtccExecutor';
+import { MockExecutor } from './protocols/mock/MockExecutor';
+import { CoinbaseFetcher } from './protocols/coinbase/CoinbaseFetcher';
+import { CoinbaseExecutor } from './protocols/coinbase/CoinbaseExecutor';
 
 const LOOP_INTERVAL_MS = 10000; // 10 seconds
 
 export class AppController {
-  private readonly dataService: DataService;
+  private readonly exchangeDataProvider: ExchangeDataProvider;
+  private readonly executionManager: ExecutionManager;
   private readonly strategyEngine: StrategyEngine;
+  private readonly flashbotsService: FlashbotsService;
 
-  constructor() {
-    console.log('[AppController] Initializing...');
-
-    const poolsConfigPath = path.join(__dirname, '..', 'pools.config.json');
-    const poolsConfigFile = fs.readFileSync(poolsConfigPath, 'utf8');
-    const poolConfigGroups: PoolConfigGroup[] = JSON.parse(poolsConfigFile);
-
-    const strategyPoolsConfig: StrategyPoolConfig[] = poolConfigGroups.flatMap(group =>
-      group.pools.map(poolAddress => ({
-        name: group.name,
-        address: poolAddress,
-        tokenA: '',
-        tokenB: '',
-        fee: 0,
-      }))
-    );
-
-    const rpcUrl = process.env.RPC_URL;
-    if (!rpcUrl) {
-      throw new Error('RPC_URL environment variable is not set.');
-    }
-    this.dataService = new DataService(rpcUrl);
-    this.strategyEngine = new StrategyEngine(this.dataService, strategyPoolsConfig);
-
-    console.log('[AppController] Initialization complete.');
+  private constructor(
+    dataProvider: ExchangeDataProvider,
+    executionManager: ExecutionManager,
+    strategyEngine: StrategyEngine,
+    flashbotsService: FlashbotsService
+  ) {
+    this.exchangeDataProvider = dataProvider;
+    this.executionManager = executionManager;
+    this.strategyEngine = strategyEngine;
+    this.flashbotsService = flashbotsService;
   }
 
-  /**
-   * Runs a single analysis cycle. It finds opportunities and handles any errors.
-   * This method is public to allow for granular testing.
-   */
+  public static async create(): Promise<AppController> {
+    console.log('[AppController] Initializing...');
+    this.validateEnvVars();
+
+    // --- Core Infrastructure Initialization ---
+    const provider = new JsonRpcProvider(process.env.RPC_URL!);
+    const executionSigner = new Wallet(process.env.EXECUTION_PRIVATE_KEY!, provider);
+
+    // --- Protocol and Service Initialization ---
+    const btccFetcher = new BtccCustomFetcher();
+    const mockFetcher = new MockFetcher();
+    const coinbaseFetcher = new CoinbaseFetcher();
+    const btccExecutor = new BtccExecutor();
+    const mockExecutor = new MockExecutor();
+    const coinbaseExecutor = new CoinbaseExecutor();
+
+    const dataProvider = new ExchangeDataProvider(
+      [
+        { name: 'btcc', instance: btccFetcher, fee: 0.001 },
+        { name: 'mockExchange', instance: mockFetcher, fee: 0.001 },
+        { name: 'coinbase', instance: coinbaseFetcher, fee: 0.004 },
+      ],
+      [
+        { name: 'btcc', instance: btccExecutor },
+        { name: 'mockExchange', instance: mockExecutor },
+        { name: 'coinbase', instance: coinbaseExecutor },
+      ]
+    );
+
+    const flashbotsService = new FlashbotsService(provider, executionSigner);
+    await flashbotsService.initialize();
+
+    const executionManager = new ExecutionManager(flashbotsService, executionSigner);
+    const strategyEngine = new StrategyEngine(dataProvider);
+
+    console.log('[AppController] Initialization complete.');
+    return new AppController(dataProvider, executionManager, strategyEngine, flashbotsService);
+  }
+
+  private static validateEnvVars(): void {
+    if (!process.env.RPC_URL) throw new Error('RPC_URL must be set.');
+    if (!process.env.EXECUTION_PRIVATE_KEY) throw new Error('EXECUTION_PRIVATE_KEY must be set.');
+    if (!process.env.FLASHBOTS_AUTH_KEY) throw new Error('FLASHBOTS_AUTH_KEY must be set.');
+    if (!process.env.FLASH_SWAP_CONTRACT_ADDRESS) throw new Error('FLASH_SWAP_CONTRACT_ADDRESS must be set.');
+  }
+
   public async runSingleCycle(): Promise<void> {
     try {
       console.log(`[AppController] [${new Date().toISOString()}] Starting analysis cycle...`);
       const opportunities = await this.strategyEngine.findOpportunities();
+
       if (opportunities.length > 0) {
-          console.log(`[AppController] [${new Date().toISOString()}] Found ${opportunities.length} opportunities.`);
+        console.log(`[AppController] [${new Date().toISOString()}] Found ${opportunities.length} opportunities. Executing...`);
+        await Promise.all(
+          opportunities.map(opp =>
+            this.executionManager.executeTrade(opp, process.env.FLASH_SWAP_CONTRACT_ADDRESS!)
+          )
+        );
+      } else {
+        console.log(`[AppController] [${new Date().toISOString()}] No opportunities found in this cycle.`);
       }
+
       console.log(`[AppController] [${new Date().toISOString()}] Analysis cycle completed successfully.`);
     } catch (error) {
       console.error(`[AppController] [${new Date().toISOString()}] An error occurred during the analysis cycle:`, error);
     }
   }
 
-  /**
-   * Starts the main application loop, which runs cycles indefinitely.
-   */
   public async start() {
     console.log('[AppController] Starting main execution loop...');
-    while (true) {
-      await this.runSingleCycle();
-      console.log(`[AppController] Waiting for ${LOOP_INTERVAL_MS / 1000} seconds before the next cycle...`);
-      await new Promise(resolve => setTimeout(resolve, LOOP_INTERVAL_MS));
-    }
+    // Perform an immediate run on startup, then enter the loop.
+    await this.runSingleCycle();
+    setInterval(() => this.runSingleCycle(), LOOP_INTERVAL_MS);
   }
 }

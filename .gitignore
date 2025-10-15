@@ -6,6 +6,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/gemini-citadel/typechain-types/
 
 # Python
 __pycache__/
@@ -25,3 +26,10 @@ pip-delete-this-directory.txt
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Temporary files
+*.state
+nohup.out
+*.report
+*.report.md
+*.txt
