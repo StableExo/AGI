@@ -24,6 +24,9 @@ export class BtccCustomFetcher implements IFetcher {
 
     // --- Placeholder implementations for IFetcher interface ---
     async fetchPrice(pair: string): Promise<number> {
+        if (!pair.includes('/')) {
+            throw new Error(`Invalid pair format: ${pair}`);
+        }
         try {
             console.log(`[BtccCustomFetcher] Fetching price for ${pair}...`);
             const market = pair.replace('/', '');
