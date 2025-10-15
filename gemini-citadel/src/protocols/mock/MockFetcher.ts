@@ -1,21 +1,11 @@
 import { IFetcher } from '../../interfaces/IFetcher';
 
 export class MockFetcher implements IFetcher {
-    private prices: Map<string, number> = new Map();
     private basePrice: number = 0;
     private multiplier: number;
 
     constructor(multiplier: number = 1.001) { // Default to a 0.1% higher price
         this.multiplier = multiplier;
-    }
-
-    /**
-     * Directly sets the price for a given trading pair.
-     * @param pair The trading pair (e.g., 'BTC-USD').
-     * @param price The price to set.
-     */
-    public setPrice(pair: string, price: number): void {
-        this.prices.set(pair, price);
     }
 
     /**
@@ -37,19 +27,11 @@ export class MockFetcher implements IFetcher {
     }
 
     /**
-     * Fetches a mock price. If a specific price has been set for the pair,
-     * it returns that price. Otherwise, it calculates a price based on the
-     * base price and multiplier.
-     * @param pair The trading pair.
-     * @returns A promise that resolves to the mock price.
+     * Fetches a mock price by applying the multiplier to the base price.
+     * @param _pair The trading pair (ignored by the mock).
+     * @returns A promise that resolves to the calculated mock price.
      */
-    async fetchPrice(pair: string): Promise<number> {
-        if (this.prices.has(pair)) {
-            const price = this.prices.get(pair)!;
-            console.log(`[MockFetcher] Returning preset price for ${pair}: ${price}`);
-            return Promise.resolve(price);
-        }
-
+    async fetchPrice(_pair: string): Promise<number> {
         if (this.basePrice === 0) {
             throw new Error("MockFetcher base price has not been set. Call setBasePrice() before fetching.");
         }

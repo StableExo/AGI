@@ -16,19 +16,15 @@ interface IArbParams {
 }
 
 export class ExecutionManager {
-  private flashbotsService: FlashbotsService | null;
+  private flashbotsService: FlashbotsService;
   private executionSigner: Wallet;
   private flashSwapInterface: Interface;
 
-  constructor(flashbotsService: FlashbotsService | null, executionSigner: Wallet) {
+  constructor(flashbotsService: FlashbotsService, executionSigner: Wallet) {
     this.flashbotsService = flashbotsService;
     this.executionSigner = executionSigner;
     this.flashSwapInterface = FlashSwap__factory.createInterface();
-    if (flashbotsService) {
-      console.log(`[ExecutionManager] Initialized for Flashbots execution.`);
-    } else {
-      console.log(`[ExecutionManager] Initialized without Flashbots service. Live execution disabled.`);
-    }
+    console.log(`[ExecutionManager] Initialized for Flashbots execution.`);
   }
 
   /**
@@ -92,13 +88,6 @@ export class ExecutionManager {
     };
 
     // 4. Submit the transaction as a bundle to Flashbots
-    if (!this.flashbotsService) {
-      console.warn('[ExecutionManager] Flashbots service is not available. Skipping trade execution.');
-      // In a real-world scenario, you might want to handle this differently,
-      // e.g., by executing a standard transaction. For now, we just log and return.
-      return false;
-    }
-
     try {
       const blockNumber = await this.executionSigner.provider.getBlockNumber();
       const targetBlock = blockNumber + 1; // Target the next block

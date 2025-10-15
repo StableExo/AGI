@@ -44,21 +44,17 @@ export class AppController {
     // --- Protocol and Service Initialization ---
     const btccFetcher = new BtccCustomFetcher();
     const mockFetcher = new MockFetcher();
-    const coinbaseFetcher = new CoinbaseFetcher();
     const btccExecutor = new BtccExecutor();
     const mockExecutor = new MockExecutor();
-    const coinbaseExecutor = new CoinbaseExecutor();
 
     const dataProvider = new ExchangeDataProvider(
       [
         { name: 'btcc', instance: btccFetcher, fee: 0.001 },
         { name: 'mockExchange', instance: mockFetcher, fee: 0.001 },
-        { name: 'coinbase', instance: coinbaseFetcher, fee: 0.004 },
       ],
       [
         { name: 'btcc', instance: btccExecutor },
         { name: 'mockExchange', instance: mockExecutor },
-        { name: 'coinbase', instance: coinbaseExecutor },
       ]
     );
 

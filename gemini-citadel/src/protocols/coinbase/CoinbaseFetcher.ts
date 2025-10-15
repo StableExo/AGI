@@ -1,7 +1,7 @@
 import { IFetcher } from '../../interfaces/IFetcher';
 import axios from 'axios';
 
-const API_BASE_URL = 'https://api.coinbase.com/v2';
+const API_BASE_URL = 'https://api.coinbase.com/api/v3/brokerage';
 
 export class CoinbaseFetcher implements IFetcher {
     constructor() {
@@ -26,10 +26,11 @@ export class CoinbaseFetcher implements IFetcher {
         }
         try {
             console.log(`[CoinbaseFetcher] Fetching price for ${pair}...`);
-            const data = await this.makePublicRequest(`/prices/${pair}/spot`);
+            // The Advanced Trade API uses product_id for pairs
+            const data = await this.makePublicRequest(`/products/${pair}`);
 
-            if (data && data.data && typeof data.data.amount === 'string') {
-                const price = parseFloat(data.data.amount);
+            if (data && typeof data.price === 'string') {
+                const price = parseFloat(data.price);
                 console.log(`[CoinbaseFetcher] Successfully fetched price for ${pair}: ${price}`);
                 return price;
             } else {

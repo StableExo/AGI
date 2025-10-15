@@ -29,19 +29,10 @@ export class StrategyEngine {
 
     // In this simplified version, we'll assume all fetchers trade the same pair.
     // A more advanced implementation would group fetchers by the pairs they support.
-    const tradingPairMap: Record<string, string> = {
-        'btcc': 'BTC/USDT',
-        'coinbase': 'BTC-USD',
-        'mockExchange': 'BTC-USD'
-    };
+    const tradingPair = 'BTC/USDT'; // Hardcoded for now
 
     const prices: { name: string, price: number, fee: number }[] = [];
     for (const [name, fetcher] of fetchers.entries()) {
-        const tradingPair = tradingPairMap[name];
-        if (!tradingPair) {
-            console.warn(`[StrategyEngine] No trading pair configured for ${name}. Skipping.`);
-            continue;
-        }
         const price = await fetcher.fetchPrice(tradingPair);
         const fee = this.dataProvider.getFee(name);
         if (fee !== undefined) {
@@ -61,10 +52,10 @@ export class StrategyEngine {
             const sourceB = prices[j];
 
             // Opportunity: Buy on A, Sell on B
-            this.evaluateOpportunity(sourceA, sourceB, tradingPairMap, opportunities);
+            this.evaluateOpportunity(sourceA, sourceB, tradingPair, opportunities);
 
             // Opportunity: Buy on B, Sell on A
-            this.evaluateOpportunity(sourceB, sourceA, tradingPairMap, opportunities);
+            this.evaluateOpportunity(sourceB, sourceA, tradingPair, opportunities);
         }
     }
 
@@ -74,7 +65,7 @@ export class StrategyEngine {
   private evaluateOpportunity(
     buySource: { name: string, price: number, fee: number },
     sellSource: { name: string, price: number, fee: number },
-    pairMap: Record<string, string>,
+    pair: string,
     opportunities: ArbitrageOpportunity[]
   ) {
     const buyPrice = buySource.price;
@@ -92,14 +83,14 @@ export class StrategyEngine {
         const buyAction: ITradeAction = {
           action: 'Buy',
           exchange: buySource.name,
-          pair: pairMap[buySource.name],
+          pair,
           price: buyPrice,
           amount: TRADE_AMOUNT
         };
         const sellAction: ITradeAction = {
           action: 'Sell',
           exchange: sellSource.name,
-          pair: pairMap[sellSource.name],
+          pair,
           price: sellPrice,
           amount: TRADE_AMOUNT
         };
