@@ -2,14 +2,17 @@ import { AppController } from '../src/AppController';
 import { StrategyEngine } from '../src/services/strategy.service';
 import { ExecutionManager } from '../src/services/ExecutionManager';
 import { ExchangeDataProvider } from '../src/services/ExchangeDataProvider';
-import { ITradeOpportunity } from '../src/interfaces/ITradeOpportunity';
+import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 
 // Mock the entire modules for the services
 jest.mock('../src/services/strategy.service');
 jest.mock('../src/services/ExecutionManager');
 jest.mock('../src/services/ExchangeDataProvider');
-jest.mock('../src/protocols/btcc/BtccFetcher');
-jest.mock('../src/protocols/btcc/BtccOrderBuilder');
+jest.mock('../src/protocols/btcc/BtccCustomFetcher');
+jest.mock('../src/protocols/mock/MockFetcher');
+jest.mock('../src/protocols/btcc/BtccExecutor');
+jest.mock('../src/protocols/mock/MockExecutor');
+
 
 // Create mock instances that we can control directly
 const mockFindOpportunities = jest.fn();
@@ -26,11 +29,11 @@ const mockExecuteTrade = jest.fn();
 (ExchangeDataProvider as jest.Mock).mockImplementation(() => ({}));
 
 
-const mockOpportunity: ITradeOpportunity = {
-  type: 'Arbitrage',
-  estimatedProfit: 100,
-  actions: [{ action: 'Buy', exchange: 'btcturk', pair: 'BTC/USDT', price: 50000, amount: 1 }],
-};
+const mockOpportunity = new ArbitrageOpportunity(
+  100,
+  { action: 'Buy', exchange: 'exchangeA', pair: 'BTC/USDT', price: 50000, amount: 1 },
+  { action: 'Sell', exchange: 'exchangeB', pair: 'BTC/USDT', price: 50100, amount: 1 }
+);
 
 describe('AppController', () => {
   let appController: AppController;

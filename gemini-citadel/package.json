@@ -34,6 +34,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@flashbots/ethers-provider-bundle": "^1.0.0",
     "@uniswap/sdk-core": "^7.7.2",
     "@uniswap/v3-core": "^1.0.1",
     "@uniswap/v3-periphery": "^1.4.4",

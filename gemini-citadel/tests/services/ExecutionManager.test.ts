@@ -1,7 +1,8 @@
 import { ExecutionManager } from '../../src/services/ExecutionManager';
 import { ExchangeDataProvider } from '../../src/services/ExchangeDataProvider';
 import { MockExecutor } from '../../src/protocols/mock/MockExecutor';
-import { ITradeOpportunity, ITradeAction } from '../../src/interfaces/ITradeOpportunity';
+import { ArbitrageOpportunity } from '../../src/models/ArbitrageOpportunity';
+import { ITradeAction } from '../../src/interfaces/ITradeAction';
 
 // Mock the ExchangeDataProvider
 jest.mock('../../src/services/ExchangeDataProvider');
@@ -51,14 +52,11 @@ describe('ExecutionManager', () => {
   });
 
   it('should successfully execute a valid trade opportunity', async () => {
-    const opportunity: ITradeOpportunity = {
-      type: 'Arbitrage',
-      actions: [
-        { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-        { exchange: 'exchange-success', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
-      ],
-      estimatedProfit: 1,
-    };
+    const opportunity = new ArbitrageOpportunity(
+      1,
+      { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
+      { exchange: 'exchange-success', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
+    );
 
     const receipts = await executionManager.executeTrade(opportunity);
 
@@ -70,14 +68,11 @@ describe('ExecutionManager', () => {
   });
 
   it('should throw a critical error if a second action fails (Halt and Alert)', async () => {
-    const opportunity: ITradeOpportunity = {
-      type: 'Arbitrage',
-      actions: [
-        { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-        { exchange: 'exchange-fail', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
-      ],
-      estimatedProfit: 1,
-    };
+    const opportunity = new ArbitrageOpportunity(
+      1,
+      { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
+      { exchange: 'exchange-fail', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
+    );
 
     // We expect the executeTrade function to throw an error
     await expect(executionManager.executeTrade(opportunity)).rejects.toThrow(
@@ -91,13 +86,12 @@ describe('ExecutionManager', () => {
   });
 
   it('should throw an error if no executor is found for an exchange', async () => {
-    const opportunity: ITradeOpportunity = {
-      type: 'Arbitrage',
-      actions: [
-        { exchange: 'non-existent-exchange', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-      ],
-      estimatedProfit: 1,
-    };
+    const opportunity = new ArbitrageOpportunity(
+      1,
+      { exchange: 'non-existent-exchange', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
+      // A valid opportunity must have two actions
+      { exchange: 'exchange-success', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
+    );
 
     await expect(executionManager.executeTrade(opportunity)).rejects.toThrow(
       /CRITICAL: No executor found for exchange: "non-existent-exchange"/
@@ -115,16 +109,14 @@ describe('ExecutionManager', () => {
       message: 'Dry run execution successful.',
     });
 
-    const opportunity: ITradeOpportunity = {
-      type: 'Arbitrage',
-      actions: [
-        { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
-      ],
-      estimatedProfit: 1,
-    };
+    const opportunity = new ArbitrageOpportunity(
+      1,
+      { exchange: 'exchange-success', action: 'Buy', pair: MOCK_PAIR, price: 100, amount: 1 },
+      { exchange: 'exchange-success', action: 'Sell', pair: MOCK_PAIR, price: 101, amount: 1 },
+    );
 
     const receipts = await executionManager.executeTrade(opportunity);
-    expect(receipts).toHaveLength(1);
+    expect(receipts).toHaveLength(2);
     expect(receipts[0].success).toBe(true);
     expect(receipts[0].message).toContain('Dry run');
   });

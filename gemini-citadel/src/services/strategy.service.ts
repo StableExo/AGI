@@ -1,12 +1,12 @@
 import { ExchangeDataProvider } from './ExchangeDataProvider';
-import { ITradeOpportunity } from '../interfaces/ITradeOpportunity';
-import { MockFetcher } from '../protocols/mock/MockFetcher';
+import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
+import { ITradeAction } from '../interfaces/ITradeAction';
+import { IFetcher } from '../interfaces/IFetcher';
 
-// Hardcoded configuration for trading pairs to be analyzed.
-// This will be refactored into an external config file later.
-const STRATEGY_PAIRS = [
-    { exchangeA: 'btcc', exchangeB: 'mockExchange', symbol: 'BTC/USDT' }
-];
+// Configuration for the strategy engine.
+// In a real-world scenario, this would be in a dedicated config file.
+const MIN_PROFIT_THRESHOLD = 0.001; // Minimum profit to consider a trade (e.g., 0.1%)
+const TRADE_AMOUNT = 1; // The amount of the base currency to trade.
 
 export class StrategyEngine {
   private dataProvider: ExchangeDataProvider;
@@ -18,77 +18,85 @@ export class StrategyEngine {
 
   /**
    * Analyzes market data to find profitable arbitrage opportunities.
-   * It iterates through a predefined list of strategy pairs, fetches prices and fees,
-   * calculates the spread, and creates a trade opportunity if it's profitable.
+   * This new logic is adapted from AxionCitadel's SpatialArbEngine.
+   * It dynamically compares all available data sources for the same trading pair.
    * @returns A promise that resolves to an array of trade opportunities.
    */
-  public async findOpportunities(): Promise<ITradeOpportunity[]> {
+  public async findOpportunities(): Promise<ArbitrageOpportunity[]> {
     console.log('[StrategyEngine] Analyzing markets for opportunities...');
-    const opportunities: ITradeOpportunity[] = [];
+    const opportunities: ArbitrageOpportunity[] = [];
+    const fetchers = this.dataProvider.getAllFetchers();
 
-    for (const pair of STRATEGY_PAIRS) {
-        const fetcherA = this.dataProvider.getFetcher(pair.exchangeA);
-        const fetcherB = this.dataProvider.getFetcher(pair.exchangeB);
-        const feeA = this.dataProvider.getFee(pair.exchangeA);
-        const feeB = this.dataProvider.getFee(pair.exchangeB);
+    // In this simplified version, we'll assume all fetchers trade the same pair.
+    // A more advanced implementation would group fetchers by the pairs they support.
+    const tradingPair = 'BTC/USDT'; // Hardcoded for now
 
-        if (!fetcherA || !fetcherB || feeA === undefined || feeB === undefined) {
-            console.error(`[StrategyEngine] Could not find fetchers or fees for pair: ${pair.exchangeA}, ${pair.exchangeB}. Skipping.`);
-            continue;
+    const prices: { name: string, price: number, fee: number }[] = [];
+    for (const [name, fetcher] of fetchers.entries()) {
+        const price = await fetcher.fetchPrice(tradingPair);
+        const fee = this.dataProvider.getFee(name);
+        if (fee !== undefined) {
+            prices.push({ name, price, fee });
         }
+    }
 
-        // Fetch price from the primary exchange
-        const priceA = await fetcherA.fetchPrice(pair.symbol);
+    if (prices.length < 2) {
+        console.log('[StrategyEngine] Not enough pricing sources to find an arbitrage opportunity.');
+        return [];
+    }
 
-        // If the second fetcher is our mock, we must set its base price
-        if (fetcherB instanceof MockFetcher) {
-            fetcherB.setBasePrice(priceA);
-        }
+    // Compare every source with every other source
+    for (let i = 0; i < prices.length; i++) {
+        for (let j = i + 1; j < prices.length; j++) {
+            const sourceA = prices[i];
+            const sourceB = prices[j];
 
-        const priceB = await fetcherB.fetchPrice(pair.symbol);
+            // Opportunity: Buy on A, Sell on B
+            this.evaluateOpportunity(sourceA, sourceB, tradingPair, opportunities);
 
-        // Determine buy/sell exchanges
-        const buyExchange = priceA < priceB ? pair.exchangeA : pair.exchangeB;
-        const sellExchange = priceA < priceB ? pair.exchangeB : pair.exchangeA;
-        const buyPrice = Math.min(priceA, priceB);
-        const sellPrice = Math.max(priceA, priceB);
-
-        // Profitability calculation
-        const spread = sellPrice - buyPrice;
-        // NOTE: For this calculation, we assume a trade amount of 1 unit of the base currency.
-        const tradeAmount = 1;
-        const totalFees = (buyPrice * feeA) + (sellPrice * feeB);
-
-        console.log(`[StrategyEngine] Analyzing ${pair.symbol} on ${pair.exchangeA} (${priceA}) vs ${pair.exchangeB} (${priceB}). Spread: ${spread.toFixed(2)}, Fees: ${totalFees.toFixed(2)}`);
-
-        if (spread > totalFees) {
-            const estimatedProfit = spread - totalFees;
-            console.log(`[StrategyEngine] Profitable opportunity found! Profit: ${estimatedProfit.toFixed(2)}`);
-
-            const opportunity: ITradeOpportunity = {
-                type: 'Arbitrage',
-                estimatedProfit,
-                actions: [
-                    {
-                        action: 'Buy',
-                        exchange: buyExchange,
-                        pair: pair.symbol,
-                        price: buyPrice,
-                        amount: tradeAmount
-                    },
-                    {
-                        action: 'Sell',
-                        exchange: sellExchange,
-                        pair: pair.symbol,
-                        price: sellPrice,
-                        amount: tradeAmount
-                    }
-                ]
-            };
-            opportunities.push(opportunity);
+            // Opportunity: Buy on B, Sell on A
+            this.evaluateOpportunity(sourceB, sourceA, tradingPair, opportunities);
         }
     }
 
     return opportunities;
+  }
+
+  private evaluateOpportunity(
+    buySource: { name: string, price: number, fee: number },
+    sellSource: { name: string, price: number, fee: number },
+    pair: string,
+    opportunities: ArbitrageOpportunity[]
+  ) {
+    const buyPrice = buySource.price;
+    const sellPrice = sellSource.price;
+
+    if (sellPrice > buyPrice) {
+      const spread = sellPrice - buyPrice;
+      const totalFees = (buyPrice * buySource.fee) + (sellPrice * sellSource.fee);
+      const estimatedProfit = (spread - totalFees) * TRADE_AMOUNT;
+
+      console.log(`[StrategyEngine] Evaluating: Buy on ${buySource.name} (${buyPrice}), Sell on ${sellSource.name} (${sellPrice}). Profit: ${estimatedProfit}`);
+
+      if (estimatedProfit > (buyPrice * MIN_PROFIT_THRESHOLD)) {
+        console.log(`[StrategyEngine] Profitable opportunity found!`);
+        const buyAction: ITradeAction = {
+          action: 'Buy',
+          exchange: buySource.name,
+          pair,
+          price: buyPrice,
+          amount: TRADE_AMOUNT
+        };
+        const sellAction: ITradeAction = {
+          action: 'Sell',
+          exchange: sellSource.name,
+          pair,
+          price: sellPrice,
+          amount: TRADE_AMOUNT
+        };
+        const opportunity = new ArbitrageOpportunity(estimatedProfit, buyAction, sellAction);
+        opportunities.push(opportunity);
+      }
+    }
   }
 }
