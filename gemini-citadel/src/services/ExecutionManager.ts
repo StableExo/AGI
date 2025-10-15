@@ -1,6 +1,5 @@
-import { ethers, Interface, Wallet } from 'ethers';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
-import { FlashbotsService } from './FlashbotsService';
+import { ExchangeDataProvider } from './ExchangeDataProvider';
 import { ITradeReceipt } from '../interfaces/ITradeReceipt';
 import { FlashSwap__factory } from '../../typechain-types'; // Correct path to generated types
 
@@ -42,20 +41,13 @@ export class ExecutionManager {
    * @param flashSwapContractAddress - The address of the deployed FlashSwap contract.
    * @returns A promise that resolves with a boolean indicating if the bundle was included.
    */
-  public async executeTrade(
-    opportunity: ArbitrageOpportunity,
-    flashSwapContractAddress: string
-  ): Promise<boolean> {
-    console.log(`[ExecutionManager] Received opportunity for Flashbots execution: ${opportunity.getSummary()}`);
+  public async executeTrade(opportunity: ArbitrageOpportunity): Promise<ITradeReceipt[]> {
+    const receipts: ITradeReceipt[] = [];
 
-    // 1. Prepare the parameters for the smart contract call
-    const arbParams: IArbParams = {
-      initiator: this.executionSigner.address,
-      titheRecipient: '0x000000000000000000000000000000000000dEaD', // Placeholder
-      titheBps: 0, // Placeholder
-      isGasEstimation: false,
-      path: this.mapActionsToSwapSteps(opportunity),
-    };
+    console.log(`[ExecutionManager] Received trade to execute: ${opportunity.getSummary()}`);
+
+    for (const action of opportunity.actions) {
+      const executor = this.dataProvider.getExecutor(action.exchange);
 
     // 2. Encode the calldata for the initiateUniswapV3FlashLoan function
     const encodedArbParams = this.flashSwapInterface.encodeFunctionData('initiateUniswapV3FlashLoan', [

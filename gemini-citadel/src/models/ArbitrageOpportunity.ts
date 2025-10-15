@@ -1,44 +1,29 @@
-import { BigNumberish } from 'ethers';
 import { ITradeAction } from '../interfaces/ITradeAction';
 
 /**
- * Represents a single arbitrage opportunity, enriched for on-chain execution.
- * This class encapsulates all the information needed to evaluate and execute a trade
- * using the FlashSwap smart contract.
+ * Represents a single arbitrage opportunity.
+ * This class encapsulates all the information needed to evaluate and execute a trade.
  */
 export class ArbitrageOpportunity {
   public readonly type: 'Arbitrage' = 'Arbitrage';
   public readonly estimatedProfit: number;
-  public readonly actions: ITradeAction[];
+  public readonly actions: [ITradeAction, ITradeAction];
   public readonly timestamp: number;
-
-  // On-chain execution specific fields
-  public flashLoanPool: string = '';
-  public flashLoanToken: string = '';
-  public flashLoanAmount: BigNumberish = 0;
 
   /**
    * Creates an instance of ArbitrageOpportunity.
    * @param estimatedProfit The calculated profit for this opportunity, after fees.
-   * @param actions An array of trade actions. For a simple arbitrage, this would be a buy and a sell.
+   * @param buyAction The 'Buy' action to be executed.
+   * @param sellAction The 'Sell' action to be executed.
    */
-  constructor(estimatedProfit: number, actions: ITradeAction[]) {
-    this.estimatedProfit = estimatedProfit;
-    this.actions = actions;
-    this.timestamp = Date.now();
-  }
+  constructor(estimatedProfit: number, buyAction: ITradeAction, sellAction: ITradeAction) {
+    if (buyAction.action !== 'Buy' || sellAction.action !== 'Sell') {
+      throw new Error("Actions must be 'Buy' and 'Sell' in the correct order.");
+    }
 
-  /**
-   * Enriches the opportunity with the necessary data for an on-chain flash loan.
-   * This would typically be called by the StrategyEngine after identifying a viable opportunity.
-   * @param poolAddress The address of the Uniswap V3 pool for the flash loan.
-   * @param tokenAddress The address of the token to be borrowed.
-   * @param amount The amount of the token to borrow.
-   */
-  public setFlashLoanDetails(poolAddress: string, tokenAddress: string, amount: BigNumberish): void {
-    this.flashLoanPool = poolAddress;
-    this.flashLoanToken = tokenAddress;
-    this.flashLoanAmount = amount;
+    this.estimatedProfit = estimatedProfit;
+    this.actions = [buyAction, sellAction];
+    this.timestamp = Date.now();
   }
 
   /**
@@ -46,16 +31,11 @@ export class ArbitrageOpportunity {
    * @returns A string summarizing the trade.
    */
   public getSummary(): string {
-    const actionSummaries = this.actions.map(a =>
-      `  - ${a.action} ${a.amount} ${a.pair} on ${a.exchange} @ ${a.price}`
-    ).join('\n');
-
-    const flashLoanSummary = this.flashLoanPool
-      ? `\n  - Flash Loan: ${this.flashLoanAmount.toString()} of ${this.flashLoanToken} from ${this.flashLoanPool}`
-      : '';
-
+    const buyAction = this.actions[0];
+    const sellAction = this.actions[1];
     return `Arbitrage Opportunity:
-${actionSummaries}
-    - Estimated Profit: ${this.estimatedProfit.toFixed(4)}${flashLoanSummary}`;
+    - Buy ${buyAction.amount} ${buyAction.pair} on ${buyAction.exchange} @ ${buyAction.price}
+    - Sell ${sellAction.amount} ${sellAction.pair} on ${sellAction.exchange} @ ${sellAction.price}
+    - Estimated Profit: ${this.estimatedProfit.toFixed(4)}`;
   }
 }
