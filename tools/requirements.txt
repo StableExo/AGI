@@ -1,7 +1,0 @@
-numpy
-faiss-cpu
-sentence-transformers
-torch
-pycparser
-ecdsa
-base58
