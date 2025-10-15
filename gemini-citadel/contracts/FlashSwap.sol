@@ -182,7 +182,7 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
 
     function executeOperation(
         address[] calldata, address[] calldata, uint256[] calldata, address, bytes calldata
-    ) external override nonReentrant returns (bool) {
+    ) external nonReentrant returns (bool) {
         // Aave implementation to be added in a future step.
         return true;
     }
