@@ -1,4 +1,4 @@
-import { ITradeOpportunity } from '../interfaces/ITradeOpportunity';
+import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
 import { ExchangeDataProvider } from './ExchangeDataProvider';
 import { ITradeReceipt } from '../interfaces/ITradeReceipt';
 
@@ -17,8 +17,10 @@ export class ExecutionManager {
    * @param opportunity - The trade opportunity to execute.
    * @returns A promise that resolves with an array of trade receipts upon full success.
    */
-  public async executeTrade(opportunity: ITradeOpportunity): Promise<ITradeReceipt[]> {
+  public async executeTrade(opportunity: ArbitrageOpportunity): Promise<ITradeReceipt[]> {
     const receipts: ITradeReceipt[] = [];
+
+    console.log(`[ExecutionManager] Received trade to execute: ${opportunity.getSummary()}`);
 
     for (const action of opportunity.actions) {
       const executor = this.dataProvider.getExecutor(action.exchange);
