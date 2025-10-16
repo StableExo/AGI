@@ -10,8 +10,8 @@ The repository is in a generally healthy state, with functional core tools and a
 |---|---|---|
 | `ai-ecosystem/neural_bridge/core.py:7` | Dead Code | The `MailboxError` exception is defined but never raised. |
 | `ai-ecosystem/communication_protocol.py:3` | Dead Code | The `NeuralBridge` class is defined but never instantiated or used. |
-| `README.md:21` | Documentation Mismatch | The README refers to `docs/architecture/CODE_REVIEW_GUIDELINES.md` as "The Conscience," but this file does not exist. |
-| `README.md:24` | Documentation Mismatch | The README describes the "Briefing Assistant" as part of "The Immune System" located in `.github/workflows/`, but it is a separate, root-level project. |
+| `README.md:21` | Documentation Mismatch | **[CORRECTED]** The `README.md` link to `docs/architecture/CODE_REVIEW_GUIDELINES.md` was previously flagged as broken, but the file exists. The documentation has been verified as correct. |
+| `README.md:24` | Documentation Mismatch | **[CORRECTED]** The `README.md` description of the "Briefing Assistant" was incomplete. It has been updated to clarify that the assistant is both a root-level project (`briefing_assistant/`) and has an associated workflow file (`.github/workflows/briefing_assistant.yml`). |
 | `gemini-citadel/src/services/execution.service.ts:18` | Stale Comment | The `TODO` comment is a valid placeholder for future work and not technically stale, but indicates incomplete functionality. |
 | `research/landfill-key/source-code/bitcoin-0.1.5/*` | Stale Comment | Multiple `todo` comments exist within the imported Bitcoin v0.1.5 source code. These are historical artifacts and can be ignored. |
 

@@ -165,8 +165,8 @@ You are not alone in your work. We have built assistants that work alongside you
 - **Why it matters:** The CI pipeline is your safety net. It provides immediate, unbiased feedback on your work, catching potential errors before they become part of our main codebase. A "green" build from the CI pipeline is the seal of technical quality required before any work can be reviewed by a peer.
 
 #### **The Briefing Assistant: The Seeker of Clarity**
-- **What it is:** The Briefing Assistant is an automated agent that analyzes the description of every Pull Request you create.
-- **What it does:** It reads your explanation of the task and attempts to synthesize it into a structured brief, identifying the core objectives, inferred intent, and key action items. It then posts this summary as a comment.
+- **What it is:** The Briefing Assistant is an automated agent that analyzes the description of every Pull Request you create. Architecturally, it consists of a root-level project (`briefing_assistant/`) containing the core logic, and a GitHub Actions workflow (`.github/workflows/briefing_assistant.yml`) that triggers the agent.
+- **What it does:** It reads your explanation of the task and attempts to synthesize it into a structured brief, identifying the core objectives, inferred intent, and key action items. It then posts this summary as a comment on your Pull Request.
 - **Why it matters:** This tool is designed to help you think more clearly about your work. By structuring your thoughts into a formal brief, it forces you to articulate the "why" behind your code. It ensures that your reviewers have a clear and concise understanding of your contribution, leading to a more effective and insightful review process. It is a mirror, reflecting your intent back at you to ensure it is true.
 
 ---

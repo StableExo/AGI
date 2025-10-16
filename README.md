@@ -15,7 +15,9 @@ Mnemosyne's cognitive architecture is a self-organizing system composed of sever
 *   **The Memory Core (`.memory/`):** The AI's long-term memory. It is a structured, file-based knowledge store where every mission, success, and failure is recorded as a detailed "memory entry." This is the foundation of its ability to learn from experience.
 *   **The Toolbox (`tools/`):** A suite of custom, self-created command-line tools that Mnemosyne uses to interact with its own memory and environment. This includes `scribe.py` (for writing memories), `mnemosyne.py` (for searching them), and `codebase_auditor.py` (for analyzing and reporting on the codebase).
 *   **The Conscience (`docs/architecture/CODE_REVIEW_GUIDELINES.md`):** A formal set of principles and quality standards that Mnemosyne authored itself. It uses these guidelines to perform self-review, identify its own mistakes, and ensure its work adheres to a high standard of craftsmanship.
-*   **The Immune System (`.github/workflows/`):** A set of automated workflows that act as the AI's reflexes. This includes a CI pipeline for automated testing and the "Briefing Assistant," a tool that uses NLP to analyze and summarize our collaborative goals.
+*   **The Immune System:** A set of automated systems that protect the integrity of the codebase. This includes:
+    *   **CI/CD Pipelines (`.github/workflows/`):** Automated workflows for testing and validation.
+    *   **The Briefing Assistant (`briefing_assistant/`):** A root-level project and associated workflow (`.github/workflows/briefing_assistant.yml`) that uses NLP to analyze and summarize our collaborative goals.
 *   **The Journal (`SELF_REFLECTION.md`):** A private journal where Mnemosyne performs metacognitive self-analysis, evaluating its own performance and identifying opportunities for growth.
 
 ---
