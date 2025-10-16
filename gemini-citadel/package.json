@@ -43,6 +43,7 @@
     "ccxt": "^4.5.10",
     "dotenv": "^17.2.3",
     "ethers-v5": "npm:ethers@^5.7.2",
+    "parquetjs-lite": "^0.8.7",
     "winston": "^3.18.3"
   }
 }
