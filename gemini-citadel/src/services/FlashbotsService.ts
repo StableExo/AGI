@@ -6,6 +6,7 @@ import {
 } from '@flashbots/ethers-provider-bundle';
 import { BigNumberish, JsonRpcProvider, Wallet } from 'ethers';
 import { flashbotsUrls } from '../config/flashbots.config';
+import logger from './logger.service';
 
 export class FlashbotsService {
   private flashbotsProvider: FlashbotsBundleProvider | null = null;
@@ -42,16 +43,16 @@ export class FlashbotsService {
     }
 
     const signedBundle = await this.flashbotsProvider.signBundle(bundle);
-    console.log('Signed bundle:', signedBundle);
+    logger.info('Signed bundle:', signedBundle);
 
     const simulation = await this.flashbotsProvider.simulate(
       signedBundle,
       targetBlock
     );
-    console.log('Simulation result:', simulation);
+    logger.info('Simulation result:', simulation);
 
     if ('error' in simulation || simulation.results.some(tx => 'revert' in (tx as any))) {
-      console.error('Flashbots bundle simulation failed:', simulation);
+      logger.error('Flashbots bundle simulation failed:', simulation);
       return false;
     }
 
@@ -61,20 +62,20 @@ export class FlashbotsService {
     );
 
     if ('error' in flashbotsTransaction) {
-      console.error('Error sending Flashbots bundle:', flashbotsTransaction.error.message);
+      logger.error('Error sending Flashbots bundle:', flashbotsTransaction.error.message);
       return false;
     }
 
     const resolution = await flashbotsTransaction.wait();
 
     if (resolution === FlashbotsBundleResolution.BundleIncluded) {
-      console.log('Flashbots bundle included in block:', targetBlock);
+      logger.info('Flashbots bundle included in block:', targetBlock);
       return true;
     } else if (resolution === FlashbotsBundleResolution.BlockPassedWithoutInclusion) {
-      console.log('Flashbots bundle not included in block:', targetBlock);
+      logger.warn('Flashbots bundle not included in block:', targetBlock);
       return false;
     } else if (resolution === FlashbotsBundleResolution.AccountNonceTooHigh) {
-      console.log('Flashbots bundle failed due to nonce too high.');
+      logger.warn('Flashbots bundle failed due to nonce too high.');
       return false;
     }
     return false;

@@ -2,6 +2,7 @@ import { CoinbaseFetcher } from '../../../src/protocols/coinbase/CoinbaseFetcher
 import { CoinbaseExecutor } from '../../../src/protocols/coinbase/CoinbaseExecutor';
 import { ITradeAction } from '../../../src/interfaces/ITradeAction';
 import axios from 'axios';
+import logger from '../../../src/services/logger.service';
 
 // Mock axios to avoid actual API calls
 jest.mock('axios');
@@ -67,15 +68,15 @@ describe('CoinbaseExecutor', () => {
     });
 
     it('should correctly log a DRY_RUN order', async () => {
-        const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+        const loggerSpy = jest.spyOn(logger, 'info').mockImplementation();
 
         const receipt = await executor.placeOrder(mockAction);
 
         expect(receipt.success).toBe(true);
         expect(receipt.orderId).toContain('dry-run-');
-        expect(consoleSpy).toHaveBeenCalledWith('[CoinbaseExecutor][DRY_RUN] Would place the following order:');
+        expect(loggerSpy).toHaveBeenCalledWith('[CoinbaseExecutor][DRY_RUN] Would place the following order:');
 
-        consoleSpy.mockRestore();
+        loggerSpy.mockRestore();
     });
 
     it('should execute a LIVE order', async () => {

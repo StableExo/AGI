@@ -1,5 +1,7 @@
 import { IFetcher } from '../interfaces/IFetcher';
 import { IExecutor } from '../interfaces/IExecutor';
+import { IExchange } from '../interfaces/IExchange';
+import logger from './logger.service';
 
 interface IFetcherEntry {
   instance: IFetcher;
@@ -10,15 +12,10 @@ export class ExchangeDataProvider {
   private fetchers: Map<string, IFetcherEntry> = new Map();
   private executors: Map<string, IExecutor> = new Map();
 
-  constructor(
-    fetcherInstances: { name: string; instance: IFetcher; fee: number }[],
-    executorInstances: { name: string; instance: IExecutor }[]
-  ) {
-    fetcherInstances.forEach(fetcher => {
-      this.registerFetcher(fetcher.name, fetcher.instance, fetcher.fee);
-    });
-    executorInstances.forEach(executor => {
-      this.registerExecutor(executor.name, executor.instance);
+  constructor(exchanges: IExchange[]) {
+    exchanges.forEach(exchange => {
+      this.registerFetcher(exchange.name, exchange.fetcher, exchange.fee);
+      this.registerExecutor(exchange.name, exchange.executor);
     });
   }
 
@@ -30,7 +27,7 @@ export class ExchangeDataProvider {
    */
   public registerFetcher(name: string, fetcher: IFetcher, fee: number): void {
     this.fetchers.set(name, { instance: fetcher, fee });
-    console.log(`[ExchangeDataProvider] Registered fetcher: ${name} with fee: ${fee}`);
+    logger.info(`[ExchangeDataProvider] Registered fetcher: ${name} with fee: ${fee}`);
   }
 
   /**
@@ -40,7 +37,7 @@ export class ExchangeDataProvider {
    */
   public registerExecutor(name: string, executor: IExecutor): void {
     this.executors.set(name, executor);
-    console.log(`[ExchangeDataProvider] Registered executor: ${name}`);
+    logger.info(`[ExchangeDataProvider] Registered executor: ${name}`);
   }
 
   /**

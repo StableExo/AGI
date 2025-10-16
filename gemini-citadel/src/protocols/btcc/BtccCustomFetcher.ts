@@ -2,6 +2,7 @@
 
 import { IFetcher } from '../../interfaces/IFetcher';
 import axios from 'axios';
+import logger from '../../services/logger.service';
 
 const API_BASE_URL = 'https://spotapi2.btcccdn.com';
 
@@ -17,7 +18,7 @@ export class BtccCustomFetcher implements IFetcher {
             const response = await axios.get(url, { params });
             return response.data;
         } catch (error: any) {
-            console.error(`[BtccCustomFetcher] API Request FAILED for GET ${path}:`, error.response ? error.response.data : error.message);
+            logger.error(`[BtccCustomFetcher] API Request FAILED for GET ${path}:`, error.response ? error.response.data : error.message);
             throw error;
         }
     }
@@ -28,20 +29,20 @@ export class BtccCustomFetcher implements IFetcher {
             throw new Error(`Invalid pair format: ${pair}`);
         }
         try {
-            console.log(`[BtccCustomFetcher] Fetching price for ${pair}...`);
+            logger.info(`[BtccCustomFetcher] Fetching price for ${pair}...`);
             const market = pair.replace('/', '');
             const data = await this.makePublicRequest('/btcc_api_trade/market/last', { market });
 
             if (data && typeof data.result === 'string') {
                 const price = parseFloat(data.result);
-                console.log(`[BtccCustomFetcher] Successfully fetched price for ${pair}: ${price}`);
+                logger.info(`[BtccCustomFetcher] Successfully fetched price for ${pair}: ${price}`);
                 return price;
             } else {
-                console.error(`[BtccCustomFetcher] Unexpected response structure for ${pair}:`, data);
+                logger.error(`[BtccCustomFetcher] Unexpected response structure for ${pair}:`, data);
                 throw new Error(`Unexpected response structure for ${pair}.`);
             }
         } catch (error) {
-            console.error(`[BtccCustomFetcher] Failed to fetch price for ${pair}.`);
+            logger.error(`[BtccCustomFetcher] Failed to fetch price for ${pair}.`);
             throw error;
         }
     }

@@ -42,6 +42,7 @@
     "axios": "^1.12.2",
     "ccxt": "^4.5.10",
     "dotenv": "^17.2.3",
-    "ethers-v5": "npm:ethers@^5.7.2"
+    "ethers-v5": "npm:ethers@^5.7.2",
+    "winston": "^3.18.3"
   }
 }

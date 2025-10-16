@@ -2,6 +2,7 @@ import { ExchangeDataProvider } from './ExchangeDataProvider';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
 import { ITradeAction } from '../interfaces/ITradeAction';
 import { IFetcher } from '../interfaces/IFetcher';
+import logger from './logger.service';
 
 // Configuration for the strategy engine.
 // In a real-world scenario, this would be in a dedicated config file.
@@ -13,7 +14,7 @@ export class StrategyEngine {
 
   constructor(dataProvider: ExchangeDataProvider) {
     this.dataProvider = dataProvider;
-    console.log('[StrategyEngine] Initialized.');
+    logger.info('[StrategyEngine] Initialized.');
   }
 
   /**
@@ -23,7 +24,7 @@ export class StrategyEngine {
    * @returns A promise that resolves to an array of trade opportunities.
    */
   public async findOpportunities(): Promise<ArbitrageOpportunity[]> {
-    console.log('[StrategyEngine] Analyzing markets for opportunities...');
+    logger.info('[StrategyEngine] Analyzing markets for opportunities...');
     const opportunities: ArbitrageOpportunity[] = [];
     const fetchers = this.dataProvider.getAllFetchers();
 
@@ -41,7 +42,7 @@ export class StrategyEngine {
     }
 
     if (prices.length < 2) {
-        console.log('[StrategyEngine] Not enough pricing sources to find an arbitrage opportunity.');
+        logger.info('[StrategyEngine] Not enough pricing sources to find an arbitrage opportunity.');
         return [];
     }
 
@@ -76,10 +77,10 @@ export class StrategyEngine {
       const totalFees = (buyPrice * buySource.fee) + (sellPrice * sellSource.fee);
       const estimatedProfit = (spread - totalFees) * TRADE_AMOUNT;
 
-      console.log(`[StrategyEngine] Evaluating: Buy on ${buySource.name} (${buyPrice}), Sell on ${sellSource.name} (${sellPrice}). Profit: ${estimatedProfit}`);
+      logger.info(`[StrategyEngine] Evaluating: Buy on ${buySource.name} (${buyPrice}), Sell on ${sellSource.name} (${sellPrice}). Profit: ${estimatedProfit}`);
 
       if (estimatedProfit > (buyPrice * MIN_PROFIT_THRESHOLD)) {
-        console.log(`[StrategyEngine] Profitable opportunity found!`);
+        logger.info(`[StrategyEngine] Profitable opportunity found!`);
         const buyAction: ITradeAction = {
           action: 'Buy',
           exchange: buySource.name,
