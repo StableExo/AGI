@@ -1,6 +1,7 @@
 import { ethers, Interface, Wallet, BigNumberish, AbiCoder } from 'ethers';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
 import { FlashbotsService } from './FlashbotsService';
+import logger from './logger.service';
 import { ITradeReceipt } from '../interfaces/ITradeReceipt';
 import { FlashSwap__factory } from '../../typechain-types'; // Correct path to generated types
 import { ISwapStep } from '../interfaces/ITradeAction';
@@ -24,7 +25,7 @@ export class ExecutionManager {
     this.flashbotsService = flashbotsService;
     this.executionSigner = executionSigner;
     this.flashSwapInterface = FlashSwap__factory.createInterface();
-    console.log(`[ExecutionManager] Initialized for Flashbots execution.`);
+    logger.info(`[ExecutionManager] Initialized for Flashbots execution.`);
   }
 
   /**
@@ -38,7 +39,7 @@ export class ExecutionManager {
     opportunity: ArbitrageOpportunity,
     flashSwapContractAddress: string
   ): Promise<boolean> {
-    console.log(`[ExecutionManager] Received opportunity for Flashbots execution: ${opportunity.getSummary()}`);
+    logger.info(`[ExecutionManager] Received opportunity for Flashbots execution: ${opportunity.getSummary()}`);
 
     if (!this.executionSigner.provider) {
       throw new Error("Execution signer must have a provider.");
@@ -92,20 +93,20 @@ export class ExecutionManager {
       const blockNumber = await this.executionSigner.provider.getBlockNumber();
       const targetBlock = blockNumber + 1; // Target the next block
 
-      console.log(`[ExecutionManager] Submitting Flashbots bundle for target block: ${targetBlock}`);
+      logger.info(`[ExecutionManager] Submitting Flashbots bundle for target block: ${targetBlock}`);
       const wasIncluded = await this.flashbotsService.sendBundle(
         [{ signer: this.executionSigner, transaction: transaction }],
         targetBlock
       );
 
       if (wasIncluded) {
-        console.log(`[ExecutionManager] SUCCESS: Flashbots bundle was included in block ${targetBlock}.`);
+        logger.info(`[ExecutionManager] SUCCESS: Flashbots bundle was included in block ${targetBlock}.`);
       } else {
-        console.warn(`[ExecutionManager] WARNING: Flashbots bundle was NOT included in block ${targetBlock}.`);
+        logger.warn(`[ExecutionManager] WARNING: Flashbots bundle was NOT included in block ${targetBlock}.`);
       }
       return wasIncluded;
     } catch (error: any) {
-      console.error(`[ExecutionManager] CRITICAL: Failed to submit Flashbots bundle. Error: ${error.message}`);
+      logger.error(`[ExecutionManager] CRITICAL: Failed to submit Flashbots bundle. Error: ${error.message}`);
       return false;
     }
   }

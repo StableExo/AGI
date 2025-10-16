@@ -3,6 +3,7 @@ import { ITradeAction } from '../../interfaces/ITradeAction';
 import { ITradeReceipt } from '../../interfaces/ITradeReceipt';
 import crypto from 'crypto';
 import axios from 'axios';
+import logger from '../../services/logger.service';
 
 const API_BASE_URL = 'https://api.coinbase.com/api/v3/brokerage';
 
@@ -49,7 +50,7 @@ export class CoinbaseExecutor implements IExecutor {
       });
       return response.data;
     } catch (error: any) {
-      console.error(`[CoinbaseExecutor] API Request FAILED for ${method} ${path}:`, error.response ? error.response.data : error.message);
+      logger.error(`[CoinbaseExecutor] API Request FAILED for ${method} ${path}:`, error.response ? error.response.data : error.message);
       throw error;
     }
   }
@@ -66,8 +67,8 @@ export class CoinbaseExecutor implements IExecutor {
     };
 
     if (this.executionMode === 'DRY_RUN') {
-      console.log('[CoinbaseExecutor][DRY_RUN] Would place the following order:');
-      console.log(JSON.stringify(requestBody, null, 2));
+      logger.info('[CoinbaseExecutor][DRY_RUN] Would place the following order:');
+      logger.info(JSON.stringify(requestBody, null, 2));
 
       return {
         success: true,
@@ -76,7 +77,7 @@ export class CoinbaseExecutor implements IExecutor {
         message: 'Dry run execution successful.',
       };
     } else if (this.executionMode === 'LIVE') {
-      console.log('[CoinbaseExecutor][LIVE] Placing real order...');
+      logger.info('[CoinbaseExecutor][LIVE] Placing real order...');
       const response = await this.makeSignedRequest('POST', '/orders', requestBody);
 
       return {

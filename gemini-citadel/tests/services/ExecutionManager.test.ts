@@ -3,6 +3,7 @@ import { ExecutionManager } from '../../src/services/ExecutionManager';
 import { FlashbotsService } from '../../src/services/FlashbotsService';
 import { ArbitrageOpportunity } from '../../src/models/ArbitrageOpportunity';
 import { ITradeAction, ISwapStep } from '../../src/interfaces/ITradeAction';
+import logger from '../../src/services/logger.service';
 
 // Mock the FlashbotsService
 jest.mock('../../src/services/FlashbotsService');
@@ -83,7 +84,7 @@ describe('ExecutionManager', () => {
   });
 
   it('should return false and log an error if FlashbotsService throws an error', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation();
     const testError = new Error('Flashbots relay error');
     const opportunity = createMockOpportunity();
     (mockFlashbotsService.sendBundle as jest.Mock).mockRejectedValue(testError);
@@ -92,11 +93,11 @@ describe('ExecutionManager', () => {
 
     expect(wasIncluded).toBe(false);
     expect(mockFlashbotsService.sendBundle).toHaveBeenCalledTimes(1);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
       `[ExecutionManager] CRITICAL: Failed to submit Flashbots bundle. Error: ${testError.message}`
     );
 
-    consoleErrorSpy.mockRestore();
+    loggerErrorSpy.mockRestore();
   });
 
   it('should throw an error if an action is missing onChainData', async () => {

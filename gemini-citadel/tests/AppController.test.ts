@@ -4,6 +4,7 @@ import { ExecutionManager } from '../src/services/ExecutionManager';
 import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 import { FlashbotsService } from '../src/services/FlashbotsService';
 import { BtccCustomFetcher } from '../src/protocols/btcc/BtccCustomFetcher';
+import logger from '../src/services/logger.service';
 
 // Mock the services
 jest.mock('../src/services/strategy.service');
@@ -27,25 +28,6 @@ const mockInitializeFlashbots = jest.fn().mockResolvedValue(undefined);
   initialize: mockInitializeFlashbots,
 }));
 
-// Mock AppController.create to avoid real initialization
-jest.spyOn(AppController, 'create').mockImplementation(async () => {
-  // We can't directly instantiate AppController as its constructor is private.
-  // So we create a mock version of it that has the method we need to test.
-  const strategyEngine = new StrategyEngine(null as any);
-  const executionManager = new ExecutionManager(null as any, null as any);
-  const flashbotsService = new FlashbotsService(null as any, null as any);
-
-  // This is a bit of a hack, but it allows us to test the runSingleCycle method
-  // without having to deal with the private constructor.
-  const appController = new (AppController as any)(
-    null,
-    executionManager,
-    strategyEngine,
-    flashbotsService
-  );
-  return appController;
-});
-
 const mockOpportunity = new ArbitrageOpportunity(100, [
   { action: 'Buy', exchange: 'exchangeA', pair: 'BTC/USDT', price: 50000, amount: 1 },
   { action: 'Sell', exchange: 'exchangeB', pair: 'BTC/USDT', price: 50100, amount: 1 },
@@ -53,20 +35,26 @@ const mockOpportunity = new ArbitrageOpportunity(100, [
 
 describe('AppController', () => {
   let appController: AppController;
-
-  beforeAll(async () => {
-    // Set up environment variables required by the AppController
-    process.env.RPC_URL = 'http://localhost:8545';
-    process.env.EXECUTION_PRIVATE_KEY = '0x0123456789012345678901234567890123456789012345678901234567890123';
-    process.env.FLASHBOTS_AUTH_KEY = '0x0123456789012345678901234567890123456789012345678901234567890123';
-    process.env.FLASH_SWAP_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890';
-
-    appController = await AppController.create();
-  });
+  let strategyEngine: StrategyEngine;
+  let executionManager: ExecutionManager;
+  let flashbotsService: FlashbotsService;
 
   beforeEach(() => {
     mockFindOpportunities.mockClear();
     mockExecuteTrade.mockClear();
+
+    // Instantiate mocks
+    strategyEngine = new (StrategyEngine as any)(null);
+    executionManager = new (ExecutionManager as any)(null, null);
+    flashbotsService = new (FlashbotsService as any)(null, null);
+
+    // Instantiate the controller with mocks
+    appController = new AppController(
+      null as any, // dataProvider is not used in AppController methods directly
+      executionManager,
+      strategyEngine,
+      flashbotsService
+    );
   });
 
   it('should find and execute an opportunity', async () => {
@@ -84,17 +72,17 @@ describe('AppController', () => {
   });
 
   it('should handle errors from the strategy engine gracefully', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation();
     const testError = new Error('Strategy Engine Failed');
     mockFindOpportunities.mockRejectedValue(testError);
 
     await appController.runSingleCycle();
 
     expect(mockExecuteTrade).not.toHaveBeenCalled();
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('An error occurred during the analysis cycle:'),
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      `[AppController] An error occurred during the analysis cycle:`,
       testError
     );
-    consoleErrorSpy.mockRestore();
+    loggerErrorSpy.mockRestore();
   });
 });

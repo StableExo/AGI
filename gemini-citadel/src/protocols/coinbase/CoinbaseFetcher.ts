@@ -1,5 +1,6 @@
 import { IFetcher } from '../../interfaces/IFetcher';
 import axios from 'axios';
+import logger from '../../services/logger.service';
 
 const API_BASE_URL = 'https://api.coinbase.com/api/v3/brokerage';
 
@@ -14,7 +15,7 @@ export class CoinbaseFetcher implements IFetcher {
             const response = await axios.get(url, { params });
             return response.data;
         } catch (error: any) {
-            console.error(`[CoinbaseFetcher] API Request FAILED for GET ${path}:`, error.response ? error.response.data : error.message);
+            logger.error(`[CoinbaseFetcher] API Request FAILED for GET ${path}:`, error.response ? error.response.data : error.message);
             throw error;
         }
     }
@@ -25,20 +26,20 @@ export class CoinbaseFetcher implements IFetcher {
             throw new Error(`Invalid pair format for Coinbase: ${pair}. Expected format like 'BTC-USD'.`);
         }
         try {
-            console.log(`[CoinbaseFetcher] Fetching price for ${pair}...`);
+            logger.info(`[CoinbaseFetcher] Fetching price for ${pair}...`);
             // The Advanced Trade API uses product_id for pairs
             const data = await this.makePublicRequest(`/products/${pair}`);
 
             if (data && typeof data.price === 'string') {
                 const price = parseFloat(data.price);
-                console.log(`[CoinbaseFetcher] Successfully fetched price for ${pair}: ${price}`);
+                logger.info(`[CoinbaseFetcher] Successfully fetched price for ${pair}: ${price}`);
                 return price;
             } else {
-                console.error(`[CoinbaseFetcher] Unexpected response structure for ${pair}:`, data);
+                logger.error(`[CoinbaseFetcher] Unexpected response structure for ${pair}:`, data);
                 throw new Error(`Unexpected response structure for ${pair}.`);
             }
         } catch (error) {
-            console.error(`[CoinbaseFetcher] Failed to fetch price for ${pair}.`);
+            logger.error(`[CoinbaseFetcher] Failed to fetch price for ${pair}.`);
             throw error;
         }
     }

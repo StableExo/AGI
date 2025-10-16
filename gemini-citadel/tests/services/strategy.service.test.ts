@@ -22,7 +22,7 @@ describe('StrategyEngine', () => {
   beforeEach(() => {
     // We initialize a new ExchangeDataProvider for each test to ensure isolation.
     // The fetchers and executors arrays are empty because we will mock the necessary methods.
-    dataProvider = new ExchangeDataProvider([], []);
+    dataProvider = new ExchangeDataProvider([]);
     strategyEngine = new StrategyEngine(dataProvider);
   });
 
