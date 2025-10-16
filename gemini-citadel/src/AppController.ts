@@ -5,6 +5,7 @@ import { CexStrategyEngine } from './services/CexStrategyEngine';
 import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
 import { FlashbotsService } from './services/FlashbotsService';
+import { TelegramAlertingService } from './services/telegram-alerting.service';
 import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
 
@@ -14,19 +15,22 @@ export class AppController {
   private readonly strategyEngine: StrategyEngine; // For DEX
   private readonly cexStrategyEngine: CexStrategyEngine; // For CEX
   private readonly flashbotsService: FlashbotsService;
+  private readonly telegramAlertingService: TelegramAlertingService;
 
   constructor(
     dataProvider: ExchangeDataProvider,
     executionManager: ExecutionManager,
     strategyEngine: StrategyEngine,
     flashbotsService: FlashbotsService,
-    cexStrategyEngine: CexStrategyEngine
+    cexStrategyEngine: CexStrategyEngine,
+    telegramAlertingService: TelegramAlertingService
   ) {
     this.exchangeDataProvider = dataProvider;
     this.executionManager = executionManager;
     this.strategyEngine = strategyEngine;
     this.flashbotsService = flashbotsService;
     this.cexStrategyEngine = cexStrategyEngine;
+    this.telegramAlertingService = telegramAlertingService;
   }
 
   public async runDexCycle(): Promise<void> {
