@@ -5,6 +5,7 @@ import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
 import { FlashbotsService } from './services/FlashbotsService';
 import { CexStrategyEngine } from './services/CexStrategyEngine';
+import { TelegramAlertingService } from './services/telegram-alerting.service';
 import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
 
@@ -35,6 +36,10 @@ export class AppFactory {
     const executionManager = new ExecutionManager(flashbotsService, executionSigner);
     const strategyEngine = new StrategyEngine(dataProvider); // For DEX
     const cexStrategyEngine = new CexStrategyEngine(dataProvider); // For CEX
+    const telegramAlertingService = new TelegramAlertingService(
+      process.env.TELEGRAM_BOT_TOKEN!,
+      process.env.TELEGRAM_CHAT_ID!
+    );
 
     // --- Protocol Initialization ---
     for (const exchangeConfig of botConfig.exchanges) {
@@ -60,7 +65,14 @@ export class AppFactory {
     }
 
     logger.info('[AppFactory] Initialization complete.');
-    return new AppController(dataProvider, executionManager, strategyEngine, flashbotsService, cexStrategyEngine);
+    return new AppController(
+      dataProvider,
+      executionManager,
+      strategyEngine,
+      flashbotsService,
+      cexStrategyEngine,
+      telegramAlertingService
+    );
   }
 
   private static validateEnvVars(): void {
@@ -69,5 +81,9 @@ export class AppFactory {
     // Flashbots may not be required for CEX-only operation, but we leave it for now.
     if (!process.env.FLASHBOTS_AUTH_KEY) throw new Error('FLASHBOTS_AUTH_KEY must be set.');
     if (!process.env.FLASH_SWAP_CONTRACT_address) throw new Error('FLASH_SWAP_CONTRACT_ADDRESS must be set.');
+
+    // Telegram alerting credentials
+    if (!process.env.TELEGRAM_BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN must be set.');
+    if (!process.env.TELEGRAM_CHAT_ID) throw new Error('TELEGRAM_CHAT_ID must be set.');
   }
 }
