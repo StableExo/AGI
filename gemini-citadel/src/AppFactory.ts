@@ -10,6 +10,7 @@ import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
 
 // Import CEX protocol modules
+import { CcxtFetcher } from './protocols/CcxtFetcher'; // Our new generic fetcher
 import { BtccFetcher } from '../protocols/BtccFetcher';
 import { BtccExecutor } from '../protocols/BtccExecutor';
 
@@ -33,7 +34,7 @@ export class AppFactory {
     const dataProvider = new ExchangeDataProvider([]); // Start with an empty provider
     const flashbotsService = new FlashbotsService(provider, executionSigner);
     await flashbotsService.initialize();
-    const executionManager = new ExecutionManager(flashbotsService, executionSigner);
+    const executionManager = new ExecutionManager(flashbotsService, executionSigner, dataProvider);
     const strategyEngine = new StrategyEngine(dataProvider); // For DEX
     const cexStrategyEngine = new CexStrategyEngine(dataProvider); // For CEX
     const telegramAlertingService = new TelegramAlertingService(
@@ -46,13 +47,26 @@ export class AppFactory {
       if (exchangeConfig.enabled) {
         switch (exchangeConfig.type) {
           case 'CEX':
-            if (exchangeConfig.name === 'btcc') {
-              const cexFetcher = new BtccFetcher();
-              // const cexExecutor = new BtccExecutor(); // Executor integration will be handled later
-              dataProvider.registerCexFetcher(exchangeConfig.name, cexFetcher, exchangeConfig.fee);
-            } else {
-               logger.warn(`[AppFactory] Unknown CEX exchange: ${exchangeConfig.name}. Skipping.`);
+            let cexFetcher;
+            switch (exchangeConfig.name) {
+              case 'btcc':
+                // Keeping the specific BTCC fetcher for now, can be migrated later
+                cexFetcher = new BtccFetcher();
+                break;
+              case 'binance':
+              case 'kraken':
+                cexFetcher = new CcxtFetcher(
+                  exchangeConfig.name,
+                  exchangeConfig.apiKey,
+                  exchangeConfig.apiSecret
+                );
+                break;
+              default:
+                logger.warn(`[AppFactory] Unknown or unsupported CEX exchange: ${exchangeConfig.name}. Skipping.`);
+                continue; // Skip to the next exchange
             }
+            dataProvider.registerCexFetcher(exchangeConfig.name, cexFetcher, exchangeConfig.fee);
+            // Executor integration will be handled later for all CEXs
             break;
           case 'DEX':
              // Current DEX logic can remain here if needed

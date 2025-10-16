@@ -27,18 +27,34 @@ export const botConfig: BotConfig = {
     {
       name: 'btcc',
       type: 'CEX',
-      enabled: true,
+      enabled: false, // Disabling until fully implemented
       fee: 0.001,
       apiKey: process.env.BTCC_API_KEY,
       apiSecret: process.env.BTCC_API_SECRET,
     },
     {
       name: 'coinbase',
-      type: 'DEX', // Assuming Coinbase integration uses a DEX path
+      type: 'CEX',
       enabled: false,
       fee: 0.005,
       apiKey: process.env.COINBASE_API_KEY,
       apiSecret: process.env.COINBASE_API_SECRET,
+    },
+    {
+      name: 'binance',
+      type: 'CEX',
+      enabled: true,
+      fee: 0.001, // Standard Binance fee
+      apiKey: process.env.BINANCE_API_KEY,
+      apiSecret: process.env.BINANCE_API_SECRET,
+    },
+    {
+      name: 'kraken',
+      type: 'CEX',
+      enabled: true,
+      fee: 0.0016, // Standard Kraken fee
+      apiKey: process.env.KRAKEN_API_KEY,
+      apiSecret: process.env.KRAKEN_API_SECRET,
     },
     {
         name: 'mockExchange',

@@ -1,6 +1,6 @@
 import { ExchangeDataProvider } from './ExchangeDataProvider';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
-import { ITradeAction } from '../interfaces/ITradeAction';
+import { ITradeAction } from '../models/ITradeAction';
 import { IFetcher } from '../interfaces/IFetcher';
 import logger from './logger.service';
 
@@ -82,14 +82,14 @@ export class StrategyEngine {
       if (estimatedProfit > (buyPrice * MIN_PROFIT_THRESHOLD)) {
         logger.info(`[StrategyEngine] Profitable opportunity found!`);
         const buyAction: ITradeAction = {
-          action: 'Buy',
+          action: 'BUY',
           exchange: buySource.name,
           pair,
           price: buyPrice,
           amount: TRADE_AMOUNT
         };
         const sellAction: ITradeAction = {
-          action: 'Sell',
+          action: 'SELL',
           exchange: sellSource.name,
           pair,
           price: sellPrice,

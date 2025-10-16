@@ -4,7 +4,6 @@ import { CexStrategyEngine } from '../src/services/CexStrategyEngine';
 import { ExecutionManager } from '../src/services/ExecutionManager';
 import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 import { FlashbotsService } from '../src/services/FlashbotsService';
-import { ICexArbitrageOpportunity } from '../src/interfaces/ICexArbitrageOpportunity';
 import logger from '../src/services/logger.service';
 
 // Mock the services
@@ -25,23 +24,22 @@ const mockExecuteTrade = jest.fn();
   findOpportunities: mockFindCexOpportunities,
 }));
 
+const mockExecuteCexTrade = jest.fn();
+
 (ExecutionManager as jest.Mock).mockImplementation(() => ({
   executeTrade: mockExecuteTrade,
+  executeCexTrade: mockExecuteCexTrade,
 }));
 
 const mockDexOpportunity = new ArbitrageOpportunity(100, [
-  { action: 'Buy', exchange: 'exchangeA', pair: 'BTC/USDT', price: 50000, amount: 1 },
-  { action: 'Sell', exchange: 'exchangeB', pair: 'BTC/USDT', price: 50100, amount: 1 },
+  { action: 'BUY', exchange: 'exchangeA', pair: 'BTC/USDT', price: 50000, amount: 1 },
+  { action: 'SELL', exchange: 'exchangeB', pair: 'BTC/USDT', price: 50100, amount: 1 },
 ]);
 
-const mockCexOpportunity: ICexArbitrageOpportunity = {
-  pair: { base: 'BTC', quote: 'USDT' },
-  buyOn: 'cex_a',
-  sellOn: 'cex_b',
-  buyPrice: 50000,
-  sellPrice: 50500,
-  potentialProfit: 400,
-};
+const mockCexOpportunity = new ArbitrageOpportunity(400, [
+  { action: 'BUY', exchange: 'cex_a', pair: 'BTC/USDT', price: 50000, amount: 1 },
+  { action: 'SELL', exchange: 'cex_b', pair: 'BTC/USDT', price: 50500, amount: 1 },
+]);
 
 describe('AppController', () => {
   let appController: AppController;
@@ -54,6 +52,7 @@ describe('AppController', () => {
     mockFindDexOpportunities.mockClear();
     mockFindCexOpportunities.mockClear();
     mockExecuteTrade.mockClear();
+    mockExecuteCexTrade.mockClear();
 
     strategyEngine = new (StrategyEngine as any)(null);
     cexStrategyEngine = new (CexStrategyEngine as any)(null);
@@ -65,7 +64,8 @@ describe('AppController', () => {
       executionManager,
       strategyEngine,
       flashbotsService,
-      cexStrategyEngine
+      cexStrategyEngine,
+      null as any // For TelegramAlertingService
     );
   });
 
@@ -79,21 +79,18 @@ describe('AppController', () => {
   });
 
   describe('runCexCycle', () => {
-    it('should find and log a CEX opportunity', async () => {
-      const loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation();
+    it('should find and execute a CEX opportunity', async () => {
       mockFindCexOpportunities.mockResolvedValue([mockCexOpportunity]);
       await appController.runCexCycle();
       expect(mockFindCexOpportunities).toHaveBeenCalledTimes(1);
-      // Note: CEX execution is not implemented yet, so we check for the log message.
-      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Opportunity: Buy BTC on cex_a'));
-      loggerInfoSpy.mockRestore();
+      expect(mockExecuteCexTrade).toHaveBeenCalledWith(mockCexOpportunity);
     });
 
     it('should not execute if no CEX opportunities are found', async () => {
       mockFindCexOpportunities.mockResolvedValue([]);
       await appController.runCexCycle();
       expect(mockFindCexOpportunities).toHaveBeenCalledTimes(1);
-      expect(mockExecuteTrade).not.toHaveBeenCalled();
+      expect(mockExecuteCexTrade).not.toHaveBeenCalled();
     });
   });
 

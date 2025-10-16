@@ -64,11 +64,9 @@ export class AppController {
 
       if (opportunities.length > 0) {
         logger.info(`[AppController] Found ${opportunities.length} CEX opportunities. Executing...`);
-        // CEX execution logic will be added here in a future step.
-        // For now, we just log the opportunities found.
-        opportunities.forEach(opp => {
-          logger.info(`[AppController]   Opportunity: Buy ${opp.pair.base} on ${opp.buyOn} at ${opp.buyPrice}, Sell on ${opp.sellOn} at ${opp.sellPrice}. Profit: ${opp.potentialProfit.toFixed(4)} ${opp.pair.quote}`);
-        });
+        await Promise.all(
+          opportunities.map(opp => this.executionManager.executeCexTrade(opp))
+        );
       } else {
         logger.info(`[AppController] No CEX opportunities found in this cycle.`);
       }

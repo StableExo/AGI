@@ -1,6 +1,6 @@
 import { CoinbaseFetcher } from '../../../src/protocols/coinbase/CoinbaseFetcher';
 import { CoinbaseExecutor } from '../../../src/protocols/coinbase/CoinbaseExecutor';
-import { ITradeAction } from '../../../src/interfaces/ITradeAction';
+import { ITradeAction } from '../../../src/models/ITradeAction';
 import axios from 'axios';
 import logger from '../../../src/services/logger.service';
 
@@ -51,7 +51,7 @@ describe('CoinbaseExecutor', () => {
     const mockAction: ITradeAction = {
         exchange: 'coinbase',
         pair: 'BTC-USD',
-        action: 'Buy',
+        action: 'BUY',
         price: 50000,
         amount: 0.1,
     };
