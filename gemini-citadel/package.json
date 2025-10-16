@@ -38,6 +38,7 @@
     "yarn": "^1.22.22"
   },
   "dependencies": {
+    "@coinbase/wallet-sdk": "^4.3.7",
     "@flashbots/ethers-provider-bundle": "^1.0.0",
     "@uniswap/sdk-core": "^7.7.2",
     "@uniswap/v3-core": "^1.0.1",
