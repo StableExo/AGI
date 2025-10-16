@@ -1,5 +1,6 @@
 import { ExchangeDataProvider } from './ExchangeDataProvider';
-import { ICexArbitrageOpportunity } from '../interfaces/ICexArbitrageOpportunity';
+import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
+import { ITradeAction } from '../models/ITradeAction';
 import { ITradePair } from '../interfaces/ITradePair';
 import { ICexFetcher } from '../interfaces/ICexFetcher';
 import logger from './logger.service';
@@ -11,8 +12,8 @@ export class CexStrategyEngine {
     this.dataProvider = dataProvider;
   }
 
-  public async findOpportunities(pairs: ITradePair[]): Promise<ICexArbitrageOpportunity[]> {
-    const opportunities: ICexArbitrageOpportunity[] = [];
+  public async findOpportunities(pairs: ITradePair[]): Promise<ArbitrageOpportunity[]> {
+    const opportunities: ArbitrageOpportunity[] = [];
     const fetchers = this.dataProvider.getAllCexFetchers();
     const exchangeIds = Array.from(fetchers.keys());
 
@@ -43,27 +44,41 @@ export class CexStrategyEngine {
             // Scenario 1: Buy on A, Sell on B
             const profit1 = (tickerB.price * (1 - feeB)) - (tickerA.price * (1 + feeA));
             if (profit1 > 0) {
-              opportunities.push({
-                pair,
-                buyOn: exchangeAId,
-                sellOn: exchangeBId,
-                buyPrice: tickerA.price,
-                sellPrice: tickerB.price,
-                potentialProfit: profit1,
-              });
+              const buyAction: ITradeAction = {
+                action: 'BUY',
+                exchange: exchangeAId,
+                pair: `${pair.base}/${pair.quote}`,
+                price: tickerA.price,
+                amount: 1, // Assuming amount of 1 for now
+              };
+              const sellAction: ITradeAction = {
+                action: 'SELL',
+                exchange: exchangeBId,
+                pair: `${pair.base}/${pair.quote}`,
+                price: tickerB.price,
+                amount: 1,
+              };
+              opportunities.push(new ArbitrageOpportunity(profit1, [buyAction, sellAction]));
             }
 
             // Scenario 2: Buy on B, Sell on A
             const profit2 = (tickerA.price * (1 - feeA)) - (tickerB.price * (1 + feeB));
             if (profit2 > 0) {
-              opportunities.push({
-                pair,
-                buyOn: exchangeBId,
-                sellOn: exchangeAId,
-                buyPrice: tickerB.price,
-                sellPrice: tickerA.price,
-                potentialProfit: profit2,
-              });
+              const buyAction: ITradeAction = {
+                action: 'BUY',
+                exchange: exchangeBId,
+                pair: `${pair.base}/${pair.quote}`,
+                price: tickerB.price,
+                amount: 1,
+              };
+              const sellAction: ITradeAction = {
+                action: 'SELL',
+                exchange: exchangeAId,
+                pair: `${pair.base}/${pair.quote}`,
+                price: tickerA.price,
+                amount: 1,
+              };
+              opportunities.push(new ArbitrageOpportunity(profit2, [buyAction, sellAction]));
             }
           } catch (error) {
             logger.error(`[CexStrategyEngine] Error comparing ${pair.base}/${pair.quote} between ${exchangeAId} and ${exchangeBId}:`, error);

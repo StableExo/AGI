@@ -45,11 +45,11 @@ describe('StrategyEngine', () => {
     const opportunity = opportunities[0];
     expect(opportunity).toBeInstanceOf(ArbitrageOpportunity);
     // Profit = (105 - 100) - (100 * 0.001 + 105 * 0.001) = 5 - 0.205 = 4.795
-    expect(opportunity.estimatedProfit).toBeCloseTo(4.795);
-    expect(opportunity.actions[0].action).toBe('Buy');
-    expect(opportunity.actions[0].exchange).toBe('exchangeA');
-    expect(opportunity.actions[1].action).toBe('Sell');
-    expect(opportunity.actions[1].exchange).toBe('exchangeB');
+    expect(opportunity.profit).toBeCloseTo(4.795);
+    expect(opportunity.tradeActions[0].action).toBe('BUY');
+    expect(opportunity.tradeActions[0].exchange).toBe('exchangeA');
+    expect(opportunity.tradeActions[1].action).toBe('SELL');
+    expect(opportunity.tradeActions[1].exchange).toBe('exchangeB');
   });
 
   it('should not identify an opportunity if the profit is below the threshold', async () => {

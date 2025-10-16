@@ -1,5 +1,5 @@
 import { IExecutor } from '../../interfaces/IExecutor';
-import { ITradeAction } from '../../interfaces/ITradeAction';
+import { ITradeAction } from '../../models/ITradeAction';
 import { ITradeReceipt } from '../../interfaces/ITradeReceipt';
 import crypto from 'crypto';
 import axios from 'axios';

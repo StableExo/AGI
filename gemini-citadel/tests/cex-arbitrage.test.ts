@@ -48,15 +48,15 @@ describe('CexStrategyEngine', () => {
     expect(opportunities).toHaveLength(1);
     const opp = opportunities[0];
 
-    expect(opp.buyOn).toBe('cex_a');
-    expect(opp.sellOn).toBe('cex_b');
-    expect(opp.buyPrice).toBe(50000);
-    expect(opp.sellPrice).toBe(50500);
+    expect(opp.profit).toBeCloseTo(399.5);
+    expect(opp.tradeActions).toHaveLength(2);
 
-    // Profit calculation:
-    // Sell revenue: 50500 * (1 - 0.001) = 50449.5
-    // Buy cost: 50000 * (1 + 0.001) = 50050
-    // Profit: 50449.5 - 50050 = 399.5
-    expect(opp.potentialProfit).toBeCloseTo(399.5);
+    const buyAction = opp.tradeActions.find(a => a.action === 'BUY');
+    const sellAction = opp.tradeActions.find(a => a.action === 'SELL');
+
+    expect(buyAction?.exchange).toBe('cex_a');
+    expect(buyAction?.price).toBe(50000);
+    expect(sellAction?.exchange).toBe('cex_b');
+    expect(sellAction?.price).toBe(50500);
   });
 });

@@ -3230,10 +3230,10 @@ cbor@^9.0.0:
   dependencies:
     nofilter "^3.1.0"
 
-ccxt@^4.5.10:
-  version "4.5.10"
-  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-4.5.10.tgz#baa228ecc91ef08a65a0639010b72f714a14900b"
-  integrity sha512-qf53wrD09IQNmjT1h/msAkk7QqXLHILbmbjbDkse98MyYU/KMOn7XkZrII8XqdY/6nIC6+7Gnw/JYrUmLymhmw==
+ccxt@^4.5.11:
+  version "4.5.11"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-4.5.11.tgz#12f68c8947227a7e4e2e06f48920d302b9b7aa21"
+  integrity sha512-FKAvAMn8Wr0A90MLl2zQLx2gcxAt2X6woeAu2hAeXvwGtaIhzWi59mY/U3FAID6EpB4Vf1jONrYyN3bD5UnxBQ==
   dependencies:
     ws "^8.8.1"
 
