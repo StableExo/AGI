@@ -2,19 +2,19 @@ import 'dotenv/config';
 
 export interface ExchangeConfig {
   name: string;
+  type: 'CEX' | 'DEX';
   enabled: boolean;
-  fetcher: {
-    fee: number;
-  };
-  executor: {
-    apiKey: string | undefined;
-    apiSecret: string | undefined;
-  };
+  fee: number;
+  apiKey?: string;
+  apiSecret?: string;
 }
 
 export interface BotConfig {
   loopIntervalMs: number;
   exchanges: ExchangeConfig[];
+  btcc: {
+    apiUrl: string;
+  };
 }
 
 export const botConfig: BotConfig = {
@@ -22,36 +22,28 @@ export const botConfig: BotConfig = {
   exchanges: [
     {
       name: 'btcc',
+      type: 'CEX',
       enabled: true,
-      fetcher: {
-        fee: 0.001,
-      },
-      executor: {
-        apiKey: process.env.BTCC_API_KEY,
-        apiSecret: process.env.BTCC_API_SECRET,
-      },
+      fee: 0.001,
+      apiKey: process.env.BTCC_API_KEY,
+      apiSecret: process.env.BTCC_API_SECRET,
     },
     {
       name: 'coinbase',
+      type: 'DEX', // Assuming Coinbase integration uses a DEX path
       enabled: false,
-      fetcher: {
-        fee: 0.005,
-      },
-      executor: {
-        apiKey: process.env.COINBASE_API_KEY,
-        apiSecret: process.env.COINBASE_API_SECRET,
-      },
+      fee: 0.005,
+      apiKey: process.env.COINBASE_API_KEY,
+      apiSecret: process.env.COINBASE_API_SECRET,
     },
     {
         name: 'mockExchange',
+        type: 'DEX',
         enabled: true,
-        fetcher: {
-            fee: 0.001,
-        },
-        executor: {
-            apiKey: undefined,
-            apiSecret: undefined,
-        },
+        fee: 0.001,
     }
   ],
+  btcc: {
+    apiUrl: process.env.BTCC_API_URL || 'https://spotapi.btcc.com',
+  }
 };
