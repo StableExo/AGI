@@ -38,4 +38,11 @@ export interface ITreasuryManager {
    * Retrieves the current status of a funding request.
    */
   getRequestStatus(id: string): Promise<FundingRequest | null>;
+
+  /**
+   * Fetches the balance of a specific asset from the treasury wallet.
+   * @param asset The asset to check (e.g., "USDT").
+   * @returns A promise that resolves to the formatted token balance as a number.
+   */
+  getTreasuryBalance(asset: string): Promise<number>;
 }

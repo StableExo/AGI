@@ -44,4 +44,14 @@ export interface IWalletConnector {
    * Returns the connected wallet address.
    */
   getAddress(): string | null;
+
+  /**
+   * Fetches the balance of a specific ERC20 token for a given wallet address.
+   * This is a read-only operation.
+   * @param contractAddress The ERC20 token contract address.
+   * @param walletAddress The address of the wallet to check.
+   * @param decimals The number of decimals the token uses.
+   * @returns A promise that resolves to the formatted token balance as a number.
+   */
+  getTreasuryBalance(contractAddress: string, walletAddress: string, decimals: number): Promise<number>;
 }
