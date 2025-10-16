@@ -1,7 +1,10 @@
 import { ITreasuryManager, FundingRequest, FundingRequestStatus } from '../interfaces/TreasuryManager.interface';
-import { IWalletConnector } from '../interfaces/WalletConnector.interface';
-import { ethers } from 'ethers';
+import { ethers, JsonRpcProvider, Contract, formatUnits } from 'ethers';
 import { v4 as uuidv4 } from 'uuid';
+import { botConfig } from '../config/bot.config';
+import logger from './logger.service';
+import { IWalletConnector } from '../interfaces/WalletConnector.interface';
+
 
 // --- Architectural Notes ---
 // 1. State Management: The service will maintain an in-memory map of all active
@@ -20,21 +23,46 @@ import { v4 as uuidv4 } from 'uuid';
 const REQUEST_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
 // Placeholder for asset and exchange configuration
-const ASSET_CONFIG = {
-    'USDC': { contractAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' }
+const ASSET_CONFIG: { [key: string]: { contractAddress: string; decimals: number } } = {
+    'USDT': { contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6 },
+    'USDC': { contractAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6 }
 };
-const EXCHANGE_DEPOSIT_ADDRESSES = {
+
+const EXCHANGE_DEPOSIT_ADDRESSES: { [key: string]: { [key: string]: string } } = {
     'Binance': { 'USDC': '0x...BinanceDepositAddress' }
 };
 
 export class TreasuryManagerService implements ITreasuryManager {
   private fundingRequests: Map<string, FundingRequest> = new Map();
+  private onChainProvider: JsonRpcProvider;
   private walletConnector: IWalletConnector;
-  private onChainProvider: ethers.providers.JsonRpcProvider;
+
 
   constructor(walletConnector: IWalletConnector, rpcUrl: string) {
+    this.onChainProvider = new JsonRpcProvider(rpcUrl);
     this.walletConnector = walletConnector;
-    this.onChainProvider = new ethers.providers.JsonRpcProvider(rpcUrl);
+  }
+
+  public async getTreasuryBalance(asset: string): Promise<number> {
+    logger.info(`[TreasuryManager] Checking balance for ${asset}...`);
+    const assetInfo = ASSET_CONFIG[asset];
+    if (!assetInfo) {
+      throw new Error(`Asset ${asset} not configured.`);
+    }
+
+    const { contractAddress, decimals } = assetInfo;
+    const walletAddress = botConfig.treasury.walletAddress;
+
+    const erc20Abi = [
+      "function balanceOf(address account) view returns (uint256)"
+    ];
+
+    const contract = new Contract(contractAddress, erc20Abi, this.onChainProvider);
+    const balance = await contract.balanceOf(walletAddress);
+
+    const formattedBalance = parseFloat(formatUnits(balance, decimals));
+    logger.info(`[TreasuryManager] Treasury wallet balance for ${asset}: ${formattedBalance.toFixed(2)}`);
+    return formattedBalance;
   }
 
   public async requestFunding(exchange: string, asset: string, amount: string): Promise<string> {

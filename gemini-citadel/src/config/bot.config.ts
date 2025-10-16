@@ -15,6 +15,10 @@ export interface BotConfig {
   btcc: {
     apiUrl: string;
   };
+  treasury: {
+    walletAddress: string;
+    rpcUrl: string;
+  };
 }
 
 export const botConfig: BotConfig = {
@@ -45,5 +49,9 @@ export const botConfig: BotConfig = {
   ],
   btcc: {
     apiUrl: process.env.BTCC_API_URL || 'https://spotapi.btcc.com',
+  },
+  treasury: {
+    walletAddress: process.env.TREASURY_WALLET_ADDRESS || '0x9358D67164258370B0C07C37d3BF15A4c97b8Ab3',
+    rpcUrl: process.env.ETH_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID', // Placeholder
   }
 };
