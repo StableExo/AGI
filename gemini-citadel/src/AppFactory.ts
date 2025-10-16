@@ -80,7 +80,7 @@ export class AppFactory {
     if (!process.env.EXECUTION_PRIVATE_KEY) throw new Error('EXECUTION_PRIVATE_KEY must be set.');
     // Flashbots may not be required for CEX-only operation, but we leave it for now.
     if (!process.env.FLASHBOTS_AUTH_KEY) throw new Error('FLASHBOTS_AUTH_KEY must be set.');
-    if (!process.env.FLASH_SWAP_CONTRACT_address) throw new Error('FLASH_SWAP_CONTRACT_ADDRESS must be set.');
+    if (!process.env.FLASH_SWAP_CONTRACT_ADDRESS) throw new Error('FLASH_SWAP_CONTRACT_ADDRESS must be set.');
 
     // Telegram alerting credentials
     if (!process.env.TELEGRAM_BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN must be set.');
