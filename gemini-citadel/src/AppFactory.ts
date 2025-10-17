@@ -11,8 +11,6 @@ import logger from './services/logger.service';
 
 // Import CEX protocol modules
 import { CcxtFetcher } from './protocols/CcxtFetcher'; // Our new generic fetcher
-import { BtccFetcher } from '../protocols/BtccFetcher';
-import { BtccExecutor } from '../protocols/BtccExecutor';
 
 // Import DEX protocol modules
 import { MockFetcher } from './protocols/mock/MockFetcher';
@@ -49,12 +47,9 @@ export class AppFactory {
           case 'CEX':
             let cexFetcher;
             switch (exchangeConfig.name) {
-              case 'btcc':
-                // Keeping the specific BTCC fetcher for now, can be migrated later
-                cexFetcher = new BtccFetcher();
-                break;
               case 'binance':
               case 'kraken':
+              case 'coinbase':
                 cexFetcher = new CcxtFetcher(
                   exchangeConfig.name,
                   exchangeConfig.apiKey,

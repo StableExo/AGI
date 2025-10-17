@@ -1,8 +1,9 @@
 import { FlashbotsBundleProvider, FlashbotsBundleResolution } from '@flashbots/ethers-provider-bundle';
 import { JsonRpcProvider, Wallet } from 'ethers';
 import { FlashbotsService } from '../../src/services/FlashbotsService';
+import logger from '../../src/services/logger.service';
 
-// Mock the FlashbotsBundleProvider
+// Mock the FlashbotsBundleProvider and logger
 jest.mock('@flashbots/ethers-provider-bundle', () => {
   const FlashbotsBundleResolution = {
     BundleIncluded: 'BundleIncluded',
@@ -23,6 +24,9 @@ jest.mock('@flashbots/ethers-provider-bundle', () => {
     FlashbotsBundleResolution,
   };
 });
+
+// Spy on logger.warn and provide a mock implementation
+jest.spyOn(logger, 'warn').mockImplementation(() => logger);
 
 describe('FlashbotsService', () => {
   let flashbotsService: FlashbotsService;
@@ -51,9 +55,17 @@ describe('FlashbotsService', () => {
     expect(FlashbotsBundleProvider.create).toHaveBeenCalled();
   });
 
-  it('should throw an error for an unsupported chain', async () => {
+  it('should not throw an error and should log a warning for an unsupported chain', async () => {
     (mockProvider.getNetwork as jest.Mock).mockResolvedValue({ chainId: 999 });
-    await expect(flashbotsService.initialize()).rejects.toThrow('Flashbots is not supported on chain ID 999');
+
+    // The initialize method should complete without throwing an error
+    await expect(flashbotsService.initialize()).resolves.toBeUndefined();
+
+    // It should log a warning
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Flashbots is not supported on chain ID 999'));
+
+    // The service should be disabled, so trying to use it will throw a specific error
+    await expect(flashbotsService.sendBundle([], 123)).rejects.toThrow('FlashbotsService is not initialized.');
   });
 
   it('should send a bundle successfully', async () => {

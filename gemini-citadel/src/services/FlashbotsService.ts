@@ -24,7 +24,9 @@ export class FlashbotsService {
     const chainId = Number(network.chainId);
 
     if (!flashbotsUrls[chainId]) {
-      throw new Error(`Flashbots is not supported on chain ID ${chainId}`);
+      logger.warn(`[FlashbotsService] Flashbots is not supported on chain ID ${chainId}. The service will be disabled.`);
+      this.flashbotsProvider = null;
+      return;
     }
 
     this.flashbotsProvider = await FlashbotsBundleProvider.create(
