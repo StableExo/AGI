@@ -35,7 +35,7 @@ export const botConfig: BotConfig = {
     {
       name: 'coinbase',
       type: 'CEX',
-      enabled: false,
+      enabled: true, // Enabled for reconnaissance
       fee: 0.005,
       apiKey: process.env.COINBASE_API_KEY,
       apiSecret: process.env.COINBASE_API_SECRET,
@@ -43,7 +43,7 @@ export const botConfig: BotConfig = {
     {
       name: 'binance',
       type: 'CEX',
-      enabled: true,
+      enabled: false, // Geoblocked in this environment
       fee: 0.001, // Standard Binance fee
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
@@ -51,7 +51,7 @@ export const botConfig: BotConfig = {
     {
       name: 'kraken',
       type: 'CEX',
-      enabled: true,
+      enabled: true, // Enabled for reconnaissance
       fee: 0.0016, // Standard Kraken fee
       apiKey: process.env.KRAKEN_API_KEY,
       apiSecret: process.env.KRAKEN_API_SECRET,
