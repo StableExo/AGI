@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import 'dotenv/config';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -11,7 +12,13 @@ const config: HardhatUserConfig = {
       },
       viaIR: true
     }
-  }
+  },
+  networks: {
+    base: {
+      url: process.env.RPC_URL || '',
+      accounts: process.env.EXECUTION_PRIVATE_KEY ? [process.env.EXECUTION_PRIVATE_KEY] : [],
+    },
+  },
 };
 
 export default config;
