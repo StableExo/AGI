@@ -22,7 +22,6 @@
     "@typechain/hardhat": "^9.0.0",
     "@types/chai": "5.2.2",
     "@types/jest": "^30.0.0",
-    "@types/minimatch": "^6.0.0",
     "@types/mocha": "^10.0.0",
     "@types/node": "^24.6.2",
     "@types/node-telegram-bot-api": "^0.64.11",
