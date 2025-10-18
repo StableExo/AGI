@@ -82,7 +82,7 @@ def update_index_incrementally(new_memory_content, new_memory_filename):
         print(e, file=sys.stderr)
 
 
-def create_memory_entry(objective, plan, actions, key_learnings, artifacts_changed):
+def create_memory_entry(objective, plan, actions, key_learnings, artifacts_changed, related_memories=None):
     """
     Creates a new structured memory entry and incrementally updates the search index.
     """
@@ -97,28 +97,26 @@ def create_memory_entry(objective, plan, actions, key_learnings, artifacts_chang
     filepath = os.path.join(MEMORY_DIR, filename)
 
     # 2. Construct the memory content in Markdown format
-    content = f"""\
-# Memory Entry: {task_id}
+    content_parts = [
+        f"# Memory Entry: {task_id}",
+        f"## Objective\n{objective}"
+    ]
 
-## Objective
-{objective}
+    # Add related memories if they exist
+    if related_memories:
+        related_memories_list = "\n".join(f"- `{memory_id}`" for memory_id in related_memories)
+        content_parts.append(f"## Related Memories\n{related_memories_list}")
 
-## Plan
-{plan}
+    # Add the rest of the content
+    content_parts.extend([
+        f"## Plan\n{plan}",
+        f"## Actions\n```\n{actions}\n```",
+        f"## Key Learnings\n{key_learnings}",
+        f"## Artifacts Changed\n```\n{artifacts_changed}\n```"
+    ])
 
-## Actions
-```
-{actions}
-```
+    content = "\n\n".join(content_parts) + "\n"
 
-## Key Learnings
-{key_learnings}
-
-## Artifacts Changed
-```
-{artifacts_changed}
-```
-"""
 
     # 3. Write the new memory file
     try:
@@ -156,6 +154,7 @@ def main():
     parser.add_argument("--actions", required=True, help="A log of commands and actions taken.")
     parser.add_argument("--key-learnings", required=True, help="Key insights and takeaways.")
     parser.add_argument("--artifacts-changed", required=True, help="A list of files created, modified, or deleted.")
+    parser.add_argument("--related-memories", nargs='*', help="A list of related memory IDs to link to.")
 
     args = parser.parse_args()
 
@@ -165,6 +164,7 @@ def main():
         actions=args.actions,
         key_learnings=args.key_learnings,
         artifacts_changed=args.artifacts_changed,
+        related_memories=args.related_memories,
     )
 
 if __name__ == "__main__":
