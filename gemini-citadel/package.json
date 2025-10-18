@@ -4,7 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node src/index.ts"
+    "start": "ts-node src/index.ts",
+    "compile": "npx hardhat compile",
+    "test": "npx jest",
+    "test:contracts": "npx hardhat test"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",
@@ -55,5 +58,8 @@
     "node-telegram-bot-api": "^0.66.0",
     "parquetjs-lite": "^0.8.7",
     "winston": "^3.18.3"
+  },
+  "peerDependencies": {
+    "solidity-coverage": "^0.8.1"
   }
 }
