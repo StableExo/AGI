@@ -91,15 +91,27 @@ def main():
     # Dead code is the set of defined names that are never used.
     dead_code = defined_names - used_names
 
-    # Filter out some common false positives
-    # __init__ is a special method, often not called directly by name
-    # main is the entry point for scripts
-    common_false_positives = {"__init__", "main"}
-    dead_code -= common_false_positives
+    # Filter out common false positives and test patterns.
+    # - __init__: Special method, not called directly by name.
+    # - main: Standard entry point for executable scripts.
+    # - setUp, tearDown: Standard test fixture methods.
+    # - Test*, test_*: Convention for test classes and methods discovered by runners.
+    common_false_positives = {"__init__", "main", "setUp", "tearDown"}
 
-    if dead_code:
+    # We will build a new set of actual dead code, ignoring test-related code.
+    truly_dead_code = set()
+    for name in dead_code:
+        if name in common_false_positives:
+            continue
+        if name.startswith("test_"):
+            continue
+        if name.startswith("Test"):
+            continue
+        truly_dead_code.add(name)
+
+    if truly_dead_code:
         print("\nPotential Dead Code (Unused Functions/Classes):")
-        for name in sorted(list(dead_code)):
+        for name in sorted(list(truly_dead_code)):
             print(f"- {name}")
     else:
         print("\nNo obvious dead code found.")
