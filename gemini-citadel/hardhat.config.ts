@@ -14,6 +14,12 @@ const config: HardhatUserConfig = {
     }
   },
   networks: {
+    hardhat: {
+      forking: {
+        url: process.env.RPC_URL || '',
+      },
+      hardfork: "cancun"
+    },
     base: {
       url: process.env.RPC_URL || '',
       accounts: process.env.EXECUTION_PRIVATE_KEY ? [process.env.EXECUTION_PRIVATE_KEY] : [],

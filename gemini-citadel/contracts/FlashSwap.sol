@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-
-// Forward-declare interfaces for other protocols
-interface IUniswapV2Router02 {}
-interface IPool {} // Aave Pool
-interface IFlashLoanReceiver {}
+import "@aave/core-v3/contracts/flashloan/interfaces/IFlashLoanReceiver.sol";
+import "@aave/core-v3/contracts/interfaces/IPool.sol";
+import "@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol";
 
 /**
  * @title FlashSwap
@@ -30,7 +28,7 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
     // =================================================================================
 
     ISwapRouter public immutable SWAP_ROUTER;
-    IPool public immutable AAVE_POOL;
+    IPool public immutable POOL;
     address public immutable WETH;
     IUniswapV3Factory public immutable V3_FACTORY;
 
@@ -92,20 +90,40 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
 
     constructor(
         address _uniswapV3Router,
-        address _aavePool,
         address _uniswapV3Factory,
         address _wethAddress,
-        address _initialOwner
+        address _initialOwner,
+        address _aaveAddressProvider
     ) Ownable(_initialOwner) {
         SWAP_ROUTER = ISwapRouter(_uniswapV3Router);
-        AAVE_POOL = IPool(_aavePool);
         V3_FACTORY = IUniswapV3Factory(_uniswapV3Factory);
         WETH = _wethAddress;
+        POOL = IPool(IPoolAddressesProvider(_aaveAddressProvider).getPool());
+    }
+
+    function ADDRESSES_PROVIDER() public view returns (IPoolAddressesProvider) {
+        return POOL.ADDRESSES_PROVIDER();
     }
 
     // =================================================================================
     //                              EXTERNAL FUNCTIONS
     // =================================================================================
+
+    function initiateAaveFlashLoan(address[] calldata assets, uint256[] calldata amounts, uint256[] calldata modes, bytes calldata params, uint16 referralCode) public payable onlyOwner {
+        address receiverAddress = address(this);
+
+        try POOL.flashLoan(
+            receiverAddress,
+            assets,
+            amounts,
+            modes,
+            address(this),
+            params,
+            referralCode
+        ) {} catch (bytes memory reason) {
+            revert(string(reason));
+        }
+    }
 
     function initiateUniswapV3FlashLoan(
         address _pool,
@@ -181,9 +199,34 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
     }
 
     function executeOperation(
-        address[] calldata, address[] calldata, uint256[] calldata, address, bytes calldata
-    ) external nonReentrant returns (bool) {
-        // Aave implementation to be added in a future step.
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        uint256[] calldata premiums,
+        address initiator,
+        bytes calldata params
+    ) external override nonReentrant returns (bool) {
+        console.log("Initiator address in executeOperation:", initiator);
+        ArbParams memory arbParams = abi.decode(params, (ArbParams));
+
+        for (uint i = 0; i < assets.length; i++) {
+            emit FlashLoanInitiated(address(POOL), initiator, assets[i], amounts[i]);
+
+            _executeSwapPath(arbParams.path, amounts[i]);
+
+            uint256 totalRepayment = amounts[i] + premiums[i];
+            emit ArbitrageExecution(address(POOL), assets[i], amounts[i], premiums[i]);
+
+            uint256 balanceAfterSwaps = IERC20(assets[i]).balanceOf(address(this));
+            if (balanceAfterSwaps < totalRepayment) revert InsufficientFundsForRepayment();
+
+            _approveSpenderIfNeeded(assets[i], address(POOL), totalRepayment);
+
+            uint256 netProfit = balanceAfterSwaps - totalRepayment;
+            if (netProfit > 0 && !arbParams.isGasEstimation) {
+                _distributeProfit(assets[i], netProfit, arbParams);
+            }
+        }
+
         return true;
     }
 

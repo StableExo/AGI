@@ -38,13 +38,14 @@
     "jest": "^30.2.0",
     "node-telegram-bot-api": "^0.66.0",
     "solidity-coverage": "^0.8.1",
-    "ts-jest": "^29.4.4",
+    "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.0",
     "typescript": "^5.9.3",
     "yarn": "^1.22.22"
   },
   "dependencies": {
+    "@aave/core-v3": "^1.19.3",
     "@coinbase/wallet-sdk": "^4.3.7",
     "@flashbots/ethers-provider-bundle": "^1.0.0",
     "@uniswap/sdk-core": "^7.7.2",
