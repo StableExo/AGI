@@ -205,7 +205,6 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
         address initiator,
         bytes calldata params
     ) external override nonReentrant returns (bool) {
-        console.log("Initiator address in executeOperation:", initiator);
         ArbParams memory arbParams = abi.decode(params, (ArbParams));
 
         for (uint i = 0; i < assets.length; i++) {
