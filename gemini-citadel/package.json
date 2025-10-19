@@ -37,6 +37,7 @@
     "hardhat-gas-reporter": "^2.3.0",
     "jest": "^30.2.0",
     "node-telegram-bot-api": "^0.66.0",
+    "request": "^2.88.2",
     "solidity-coverage": "^0.8.1",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
