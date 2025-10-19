@@ -32,4 +32,4 @@ pip-delete-this-directory.txt
 nohup.out
 *.report
 *.report.md
-*.txt
+*.txt!requirements.lock.txt
