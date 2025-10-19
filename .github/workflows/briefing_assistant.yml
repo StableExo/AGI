@@ -20,16 +20,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.lock.txt
-
-      - name: Run Briefing Assistant
+      - name: Install and Run Briefing Assistant
         id: briefing
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock.txt
           output=$(python briefing_assistant/main.py)
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT
