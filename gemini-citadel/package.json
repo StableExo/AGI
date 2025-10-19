@@ -63,5 +63,8 @@
   },
   "peerDependencies": {
     "solidity-coverage": "^0.8.1"
+  },
+  "resolutions": {
+    "@flashbots/ethers-provider-bundle/ethers": "^6.15.0"
   }
 }
