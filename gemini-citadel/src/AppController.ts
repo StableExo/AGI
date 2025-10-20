@@ -64,6 +64,9 @@ export class AppController {
 
       if (opportunities.length > 0) {
         logger.info(`[AppController] Found ${opportunities.length} CEX opportunities. Executing...`);
+        for (const opp of opportunities) {
+          this.telegramAlertingService.sendArbitrageOpportunity(opp);
+        }
         await Promise.all(
           opportunities.map(opp => this.executionManager.executeCexTrade(opp))
         );
