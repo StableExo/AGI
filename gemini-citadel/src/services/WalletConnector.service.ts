@@ -1,12 +1,12 @@
 import { IWalletConnector, ITransactionProposal, IERC20TransferProposal } from '../interfaces/WalletConnector.interface';
 import { CoinbaseWalletSDK } from '@coinbase/wallet-sdk';
-import { ethers } from 'ethers';
+import { BrowserProvider, Contract } from 'ethers';
 
 // --- Architectural Notes ---
 // 1. SDK Initialization: The SDK will be initialized once with our app's information.
 //    This instance will be managed internally by the service.
 // 2. Provider: The SDK provides an EIP-1193 compliant provider, which can be wrapped
-//    by ethers.js for easier interaction.
+//    by ethers v6 for easier interaction. This service is now ethers v6 compliant.
 // 3. User Flow:
 //    - `initialize()` will trigger the connection prompt in the user's browser/wallet.
 //    - `proposeTransaction()` will trigger a signing request in the user's wallet.
@@ -20,7 +20,7 @@ const DEFAULT_CHAIN_ID = 1; // Mainnet
 
 export class WalletConnectorService implements IWalletConnector {
   private sdk: CoinbaseWalletSDK | null = null;
-  private provider: ethers.providers.Web3Provider | null = null;
+  private provider: BrowserProvider | null = null;
   private userAddress: string | null = null;
 
   public async initialize(): Promise<void> {
@@ -40,12 +40,14 @@ export class WalletConnectorService implements IWalletConnector {
       DEFAULT_CHAIN_ID
     );
 
-    this.provider = new ethers.providers.Web3Provider(web3Provider);
+    this.provider = new BrowserProvider(web3Provider);
 
-    // Request account access
-    const accounts = await this.provider.send('eth_requestAccounts', []);
-    if (accounts.length > 0) {
-      this.userAddress = accounts[0];
+    // Request account access and get the signer using the idiomatic ethers v6 approach.
+    // This will prompt the user to connect their wallet if they haven't already.
+    const signer = await this.provider.getSigner();
+    this.userAddress = await signer.getAddress();
+
+    if (this.userAddress) {
       console.log(`Connected to wallet: ${this.userAddress}`);
     } else {
       throw new Error('Wallet connection denied.');
@@ -57,14 +59,15 @@ export class WalletConnectorService implements IWalletConnector {
   }
 
   public async proposeTransaction(proposal: ITransactionProposal): Promise<string> {
-    if (!this.provider || !this.userAddress) {
+    if (!this.provider) {
       throw new Error('Wallet not connected. Please initialize first.');
     }
 
-    const signer = this.provider.getSigner();
+    const signer = await this.provider.getSigner();
 
     const tx = {
-      from: this.userAddress,
+      // The `from` field is automatically populated by the signer in ethers v6.
+      // Including it would cause an error.
       to: proposal.to,
       value: proposal.value,
       data: proposal.data,
@@ -76,16 +79,16 @@ export class WalletConnectorService implements IWalletConnector {
   }
 
   public async proposeERC20Transfer(proposal: IERC20TransferProposal): Promise<string> {
-    if (!this.provider || !this.userAddress) {
+    if (!this.provider) {
         throw new Error('Wallet not connected. Please initialize first.');
     }
 
-    const signer = this.provider.getSigner();
+    const signer = await this.provider.getSigner();
     const erc20Abi = [
         "function transfer(address to, uint256 amount) returns (bool)"
     ];
 
-    const contract = new ethers.Contract(proposal.contractAddress, erc20Abi, signer);
+    const contract = new Contract(proposal.contractAddress, erc20Abi, signer);
 
     // This will open the ERC20 transfer confirmation dialog in the user's wallet
     const txResponse = await contract.transfer(proposal.to, proposal.amount);
