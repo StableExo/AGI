@@ -8,6 +8,7 @@ set -e # Exit immediately if a command exits with a non-zero status.
 # --- Default Flags ---
 VERBOSE=false
 SKIP_TESTS=false
+FORCE_REINSTALL=false
 
 # --- Parse Command-Line Arguments ---
 for arg in "$@"; do
@@ -19,6 +20,10 @@ for arg in "$@"; do
     --skip-tests)
     SKIP_TESTS=true
     shift # Remove --skip-tests from processing
+    ;;
+    --force-reinstall)
+    FORCE_REINSTALL=true
+    shift # Remove --force-reinstall from processing
     ;;
   esac
 done
@@ -75,8 +80,28 @@ fi
 echo "✅ Node.js dependencies synchronized."
 
 log_step "Synchronizing Python Dependencies (Repository-Wide)..."
-find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
-echo "✅ Python dependencies synchronized."
+CHECKSUM_FILE=".keystone_checksums"
+# Find all requirements.txt, sort them to ensure consistent order, and then calculate a checksum
+CURRENT_CHECKSUM=$(find . -name 'requirements.txt' -not -path './Aegis/*' -print0 | sort -z | xargs -0 cat | sha256sum | awk '{ print $1 }')
+PREVIOUS_CHECKSUM=""
+
+if [ -f "$CHECKSUM_FILE" ]; then
+    PREVIOUS_CHECKSUM=$(cat "$CHECKSUM_FILE")
+fi
+
+if [ "$FORCE_REINSTALL" = true ]; then
+    echo ">>> --force-reinstall flag detected. Forcing re-installation of Python dependencies."
+    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
+    echo "$CURRENT_CHECKSUM" > "$CHECKSUM_FILE"
+    echo "✅ Python dependencies re-installed and checksum updated."
+elif [ "$CURRENT_CHECKSUM" = "$PREVIOUS_CHECKSUM" ]; then
+    echo "✅ Python dependencies are already in sync. Skipping."
+else
+    echo ">>> Checksum mismatch or first run. Installing Python dependencies."
+    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
+    echo "$CURRENT_CHECKSUM" > "$CHECKSUM_FILE"
+    echo "✅ Python dependencies synchronized and checksum updated."
+fi
 
 # --- 4. Smart Contract Compilation ---
 log_step "Compiling Solidity contracts with Hardhat..."
