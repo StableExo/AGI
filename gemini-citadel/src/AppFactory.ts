@@ -7,6 +7,7 @@ import { FlashbotsService } from './services/FlashbotsService';
 import { CexStrategyEngine } from './services/CexStrategyEngine';
 import { FiatConversionService } from './services/FiatConversionService';
 import { TelegramAlertingService } from './services/telegram-alerting.service';
+import { MarketIntelligenceService } from './services/MarketIntelligenceService';
 import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
 
@@ -42,6 +43,7 @@ export class AppFactory {
       process.env.TELEGRAM_CHAT_ID!,
       fiatConversionService
     );
+    const marketIntelligenceService = new MarketIntelligenceService();
 
     // --- Protocol Initialization ---
     for (const exchangeConfig of botConfig.exchanges) {
@@ -83,7 +85,8 @@ export class AppFactory {
       strategyEngine,
       flashbotsService,
       cexStrategyEngine,
-      telegramAlertingService
+      telegramAlertingService,
+      marketIntelligenceService
     );
   }
 

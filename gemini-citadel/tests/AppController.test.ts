@@ -4,10 +4,12 @@ import { CexStrategyEngine } from '../src/services/CexStrategyEngine';
 import { ExecutionManager } from '../src/services/ExecutionManager';
 import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 import { FlashbotsService } from '../src/services/FlashbotsService';
+import { MarketIntelligenceService } from '../src/services/MarketIntelligenceService';
 import logger from '../src/services/logger.service';
 
 // Mock the services
 jest.mock('../src/services/strategy.service');
+jest.mock('../src/services/MarketIntelligenceService');
 jest.mock('../src/services/CexStrategyEngine');
 jest.mock('../src/services/ExecutionManager');
 jest.mock('../src/services/FlashbotsService');
@@ -47,6 +49,7 @@ describe('AppController', () => {
   let cexStrategyEngine: CexStrategyEngine;
   let executionManager: ExecutionManager;
   let flashbotsService: FlashbotsService;
+  let marketIntelligenceService: MarketIntelligenceService;
 
   beforeEach(() => {
     mockFindDexOpportunities.mockClear();
@@ -58,6 +61,7 @@ describe('AppController', () => {
     cexStrategyEngine = new (CexStrategyEngine as any)(null);
     executionManager = new (ExecutionManager as any)(null, null);
     flashbotsService = new (FlashbotsService as any)(null, null);
+    marketIntelligenceService = new (MarketIntelligenceService as any)();
 
     appController = new AppController(
       null as any,
@@ -65,7 +69,8 @@ describe('AppController', () => {
       strategyEngine,
       flashbotsService,
       cexStrategyEngine,
-      null as any // For TelegramAlertingService
+      null as any, // For TelegramAlertingService
+      marketIntelligenceService
     );
   });
 
