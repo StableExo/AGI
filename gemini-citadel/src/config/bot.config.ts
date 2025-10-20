@@ -11,6 +11,7 @@ export interface ExchangeConfig {
 
 export interface BotConfig {
   loopIntervalMs: number;
+  significantTradeThreshold: number;
   exchanges: ExchangeConfig[];
   btcc: {
     apiUrl: string;
@@ -23,6 +24,7 @@ export interface BotConfig {
 
 export const botConfig: BotConfig = {
   loopIntervalMs: process.env.LOOP_INTERVAL_MS ? parseInt(process.env.LOOP_INTERVAL_MS, 10) : 10000,
+  significantTradeThreshold: 100, // In USD
   exchanges: [
     {
       name: 'btcc',

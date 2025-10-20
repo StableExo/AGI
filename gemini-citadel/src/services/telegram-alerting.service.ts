@@ -2,6 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import logger from './logger.service';
 import { FiatConversionService } from './FiatConversionService';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
+import { IGlobalMarketMetrics } from './MarketIntelligenceService';
 
 export class TelegramAlertingService {
   private bot: TelegramBot;
@@ -47,6 +48,20 @@ export class TelegramAlertingService {
       await this.fiatConversionService.getFiatConversion(profit, 'USD');
 
     message += fiatConversionText;
+
+    await this.sendMessage(message);
+  }
+
+  public async sendMarketWeather(metrics: IGlobalMarketMetrics): Promise<void> {
+    const { totalMarketCap, btcDominance, volume24h } = metrics;
+
+    const message = `
+      **Market Weather Report**
+      -------------------------
+      Total Market Cap: $${totalMarketCap.toLocaleString()}
+      BTC Dominance: ${btcDominance.toFixed(2)}%
+      24h Volume: $${volume24h.toLocaleString()}
+    `;
 
     await this.sendMessage(message);
   }
