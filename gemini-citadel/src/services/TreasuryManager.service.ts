@@ -1,9 +1,11 @@
 import { ITreasuryManager, FundingRequest, FundingRequestStatus } from '../interfaces/TreasuryManager.interface';
-import { ethers, JsonRpcProvider, Contract, formatUnits } from 'ethers';
+import { ethers, JsonRpcProvider, Contract, formatUnits, Interface } from 'ethers';
 import { v4 as uuidv4 } from 'uuid';
 import { botConfig } from '../config/bot.config';
 import logger from './logger.service';
 import { IWalletConnector } from '../interfaces/WalletConnector.interface';
+import { ITelegramAlertingService } from '../interfaces/TelegramAlerting.interface';
+import { treasuryConfig } from '../config/treasury.config';
 
 
 // --- Architectural Notes ---
@@ -22,30 +24,26 @@ import { IWalletConnector } from '../interfaces/WalletConnector.interface';
 
 const REQUEST_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
-// Placeholder for asset and exchange configuration
-const ASSET_CONFIG: { [key: string]: { contractAddress: string; decimals: number } } = {
-    'USDT': { contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6 },
-    'USDC': { contractAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6 }
-};
-
-const EXCHANGE_DEPOSIT_ADDRESSES: { [key: string]: { [key: string]: string } } = {
-    'Binance': { 'USDC': '0x...BinanceDepositAddress' }
-};
-
 export class TreasuryManagerService implements ITreasuryManager {
   private fundingRequests: Map<string, FundingRequest> = new Map();
   private onChainProvider: JsonRpcProvider;
   private walletConnector: IWalletConnector;
+  private alertingService: ITelegramAlertingService;
 
 
-  constructor(walletConnector: IWalletConnector, rpcUrl: string) {
+  constructor(
+    walletConnector: IWalletConnector,
+    alertingService: ITelegramAlertingService,
+    rpcUrl: string
+  ) {
     this.onChainProvider = new JsonRpcProvider(rpcUrl);
     this.walletConnector = walletConnector;
+    this.alertingService = alertingService;
   }
 
   public async getTreasuryBalance(asset: string): Promise<number> {
     logger.info(`[TreasuryManager] Checking balance for ${asset}...`);
-    const assetInfo = ASSET_CONFIG[asset];
+    const assetInfo = treasuryConfig.assets[asset as keyof typeof treasuryConfig.assets];
     if (!assetInfo) {
       throw new Error(`Asset ${asset} not configured.`);
     }
@@ -88,8 +86,8 @@ export class TreasuryManagerService implements ITreasuryManager {
 
     try {
       // 1. Propose transaction via WalletConnector
-      const depositAddress = EXCHANGE_DEPOSIT_ADDRESSES[request.exchange]?.[request.asset];
-      const assetConfig = ASSET_CONFIG[request.asset];
+      const depositAddress = treasuryConfig.exchanges[request.exchange]?.[request.asset];
+      const assetConfig = treasuryConfig.assets[request.asset as keyof typeof treasuryConfig.assets];
       if (!depositAddress || !assetConfig) {
         throw new Error(`Configuration not found for ${request.asset} on ${request.exchange}`);
       }
@@ -102,9 +100,8 @@ export class TreasuryManagerService implements ITreasuryManager {
 
       this.updateRequestStatus(id, FundingRequestStatus.PROPOSED, { proposeTxHash: txHash });
 
-      // 2. Start on-chain monitoring and timeout
+      // 2. Start on-chain monitoring, which now includes timeout logic.
       this.monitorOnChain(id);
-      this.startTimeout(id);
 
     } catch (error) {
       // This catches user rejection from the wallet or other proposal errors
@@ -117,23 +114,70 @@ export class TreasuryManagerService implements ITreasuryManager {
     const request = this.fundingRequests.get(id);
     if (!request) return;
 
-    console.log(`[${id}] Monitoring blockchain for transaction...`);
-    // In a real implementation, this would involve setting up a listener
-    // for transactions to the deposit address from the treasury wallet address.
-    // For this architectural document, we simulate the logic.
-    // Example: this.onChainProvider.on(filter, (log) => { ... });
-    // Upon finding the matching transaction, we would call:
-    // this.updateRequestStatus(id, FundingRequestStatus.CONFIRMED, { confirmTxHash: log.transactionHash });
-  }
+    logger.info(`[TreasuryManager] [${id}] Beginning on-chain monitoring...`);
 
-  private startTimeout(id: string): void {
-    setTimeout(() => {
-      const request = this.fundingRequests.get(id);
-      if (request && request.status === FundingRequestStatus.PROPOSED) {
-        console.log(`[${id}] Funding request timed out.`);
-        this.updateRequestStatus(id, FundingRequestStatus.TIMED_OUT);
+    const assetConfig = treasuryConfig.assets[request.asset as keyof typeof treasuryConfig.assets];
+    const depositAddress = treasuryConfig.exchanges[request.exchange]?.[request.asset];
+    const treasuryAddress = botConfig.treasury.walletAddress;
+
+    if (!assetConfig || !depositAddress) {
+      logger.error(`[TreasuryManager] [${id}] Missing configuration for on-chain monitoring.`);
+      this.updateRequestStatus(id, FundingRequestStatus.FAILED, { error: 'Configuration missing' });
+      return;
+    }
+
+    // Define the ERC20 Transfer event signature to filter logs
+    const erc20Interface = new ethers.Interface([
+      "event Transfer(address indexed from, address indexed to, uint256 value)"
+    ]);
+    const eventName = 'Transfer';
+    const filter = {
+        address: assetConfig.contractAddress,
+        topics: erc20Interface.getEventTopics(eventName, [
+            treasuryAddress,
+            depositAddress
+        ])
+    };
+
+    let pollCount = 0;
+    const maxPolls = 60; // Poll for 15 minutes (60 polls * 15 seconds)
+    const pollInterval = 15000; // 15 seconds
+
+    const poll = setInterval(async () => {
+      if (pollCount >= maxPolls) {
+        clearInterval(poll);
+        // This check is to ensure we don't overwrite a CONFIRMED status
+        // if the confirmation happened on the very last poll.
+        const currentRequest = this.fundingRequests.get(id);
+        if (currentRequest?.status === FundingRequestStatus.PROPOSED) {
+          logger.warn(`[TreasuryManager] [${id}] On-chain monitoring timed out.`);
+          this.updateRequestStatus(id, FundingRequestStatus.TIMED_OUT);
+        }
+        return;
       }
-    }, REQUEST_TIMEOUT_MS);
+
+      try {
+        const logs = await this.onChainProvider.getLogs(filter);
+        if (logs.length > 0) {
+          // Found a matching transaction.
+          // In a multi-tx scenario, we might need to verify the amount,
+          // but for this protocol, the first matching log is sufficient proof.
+          const log = logs[0];
+          const parsedLog = erc20Interface.parseLog(log);
+
+          if (parsedLog && parsedLog.args.value.toString() === request.amount) {
+              logger.info(`[TreasuryManager] [${id}] On-chain transaction confirmed. TxHash: ${log.transactionHash}`);
+              this.updateRequestStatus(id, FundingRequestStatus.CONFIRMED, { confirmTxHash: log.transactionHash });
+              clearInterval(poll);
+          }
+        }
+      } catch (error) {
+        logger.error(`[TreasuryManager] [${id}] Error during on-chain log polling:`, error);
+        // We do not fail the request here, to allow for recovery from transient RPC errors.
+      }
+
+      pollCount++;
+    }, pollInterval);
   }
 
   public async depositProfits(exchange: string, asset: string, amount: string): Promise<void> {
@@ -158,10 +202,35 @@ export class TreasuryManagerService implements ITreasuryManager {
   private updateRequestStatus(id: string, status: FundingRequestStatus, data: Partial<FundingRequest> = {}): void {
     const request = this.fundingRequests.get(id);
     if (request) {
+      // Prevent regression of status
+      if (request.status === FundingRequestStatus.CONFIRMED || request.status === FundingRequestStatus.FAILED) {
+        logger.warn(`[TreasuryManager] [${id}] Attempted to update status of a terminal request. Current: ${request.status}, New: ${status}`);
+        return;
+      }
+
       request.status = status;
       request.updatedAt = Date.now();
       Object.assign(request, data);
-      console.log(`[${id}] Status updated to ${status}`);
+
+      const logContext = {
+          requestId: id,
+          exchange: request.exchange,
+          asset: request.asset,
+          amount: request.amount,
+          newStatus: status
+      };
+
+      if (status === FundingRequestStatus.FAILED) {
+        logger.error(`[TreasuryManager] Funding request failed.`, { ...logContext, error: (data as any).error });
+        this.alertingService.sendAlert(
+          `Critical Alert: Funding Request Failed`,
+          `Request ID: ${id}\nExchange: ${request.exchange}\nAsset: ${request.asset}\nAmount: ${request.amount}\nReason: ${ (data as any).error || 'Unknown'}`
+        );
+      } else if (status === FundingRequestStatus.REJECTED || status === FundingRequestStatus.TIMED_OUT) {
+        logger.warn(`[TreasuryManager] Funding request did not complete.`, logContext);
+      } else {
+        logger.info(`[TreasuryManager] Funding request status updated.`, logContext);
+      }
     }
   }
 }
