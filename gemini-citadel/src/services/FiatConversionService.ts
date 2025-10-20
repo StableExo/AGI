@@ -1,83 +1,63 @@
 import axios from 'axios';
-import { fiatConfig } from '../config/fiat.config';
+import { FIAT_CURRENCIES } from '../config/fiat.config';
 import logger from './logger.service';
 
-interface ExchangeRates {
-  [currency: string]: {
-    '15m': number;
-    last: number;
-    buy: number;
-    sell: number;
-    symbol: string;
+const API_URL = 'https://api.blockchain.com/v3/exchange/tickers';
+const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+interface PriceEvent {
+  symbol: string;
+  price_24h: number;
+  volume_24h: number;
+  last_trade_price: number;
+}
+
+interface RateCache {
+  [key: string]: {
+    rate: number;
+    timestamp: number;
   };
 }
 
-interface CacheEntry {
-  rates: ExchangeRates;
-  timestamp: number;
-}
+class FiatConversionService {
+  private cache: RateCache = {};
+  private isInitialized = false;
 
-export class FiatConversionService {
-  private readonly apiUrl = 'https://blockchain.info/ticker';
-  private readonly cacheDuration = 15 * 60 * 1000; // 15 minutes
-  private cache: CacheEntry | null = null;
+  public async getConversionRate(currency: string): Promise<number | null> {
+    const cached = this.cache[currency];
+    const isCacheValid = cached && Date.now() - cached.timestamp < CACHE_DURATION_MS;
 
-  public async getFiatConversion(
-    amount: number,
-    fromCurrency: string = 'USD' // Assuming profit is in a USD-pegged stablecoin
-  ): Promise<string> {
-    try {
-      const rates = await this.getExchangeRates();
-      if (!rates) {
-        return ' (Fiat conversion unavailable)';
-      }
-
-      // The API returns rates relative to BTC. We need to convert from the input currency (e.g., USDT, assumed to be ~USD) to the target currencies.
-      const fromRate = rates[fromCurrency];
-      if (!fromRate) {
-        logger.warn(
-          `[FiatConversionService] Could not find exchange rate for source currency: ${fromCurrency}`
-        );
-        return ' (Fiat conversion unavailable)';
-      }
-
-      const conversions = fiatConfig.targetCurrencies
-        .map((targetCurrency) => {
-          const targetRate = rates[targetCurrency];
-          if (targetRate) {
-            const convertedValue = (amount * targetRate.last) / fromRate.last;
-            return `${convertedValue.toFixed(2)} ${targetCurrency}`;
-          }
-          return null;
-        })
-        .filter((c) => c !== null)
-        .join(', ');
-
-      return conversions ? ` (~${conversions})` : '';
-    } catch (error) {
-      logger.error('[FiatConversionService] Error getting fiat conversion:', error);
-      return ' (Fiat conversion unavailable)';
+    if (!this.isInitialized || !isCacheValid) {
+      await this.updateRates();
     }
+
+    const updated = this.cache[currency];
+    return updated ? updated.rate : null;
   }
 
-  private async getExchangeRates(): Promise<ExchangeRates | null> {
-    const now = Date.now();
-    if (this.cache && now - this.cache.timestamp < this.cacheDuration) {
-      logger.info('[FiatConversionService] Returning cached exchange rates.');
-      return this.cache.rates;
-    }
-
+  private async updateRates(): Promise<void> {
     try {
-      logger.info('[FiatConversionService] Fetching fresh exchange rates from API.');
-      const response = await axios.get<ExchangeRates>(this.apiUrl);
-      this.cache = {
-        rates: response.data,
-        timestamp: now,
-      };
-      return response.data;
+      const response = await axios.get<PriceEvent[]>(API_URL);
+      const tickers = response.data;
+
+      const newCache: RateCache = {};
+      for (const currency of FIAT_CURRENCIES) {
+        const pair = `BTC-${currency}`;
+        const ticker = tickers.find(t => t.symbol === pair);
+        if (ticker) {
+          newCache[currency] = {
+            rate: ticker.last_trade_price,
+            timestamp: Date.now(),
+          };
+        }
+      }
+      this.cache = newCache;
+      this.isInitialized = true;
+      logger.info('Successfully updated fiat conversion rates.');
     } catch (error) {
-      logger.error('[FiatConversionService] Failed to fetch exchange rates from blockchain.com:', error);
-      return null;
+      logger.error('Failed to update fiat conversion rates:', error);
     }
   }
 }
+
+export const fiatConversionService = new FiatConversionService();
