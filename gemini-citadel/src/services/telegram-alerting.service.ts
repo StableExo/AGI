@@ -38,26 +38,15 @@ export class TelegramAlertingService {
     opportunity: ArbitrageOpportunity
   ): Promise<void> {
     const profit = opportunity.profit;
+    // Assuming profit is in a USD-pegged stablecoin as per the architectural directive.
     let message = `🚀 Arbitrage Opportunity Found! Profit: ${profit.toFixed(
-      8
-    )} ETH`;
+      6
+    )} USDT`;
 
-    try {
-      const ticker = await this.fiatConversionService.getTicker();
-      const usdValue = ticker['USD'].last * profit;
-      const eurValue = ticker['EUR'].last * profit;
-      const jpyValue = ticker['JPY'].last * profit;
+    const fiatConversionText =
+      await this.fiatConversionService.getFiatConversion(profit, 'USD');
 
-      message += `\n💰 Fiat Value:
-      - ${usdValue.toFixed(2)} USD
-      - ${eurValue.toFixed(2)} EUR
-      - ${jpyValue.toFixed(2)} JPY`;
-    } catch (error) {
-      logger.error(
-        '[TelegramAlertingService] Could not fetch fiat conversions for opportunity alert.',
-        error
-      );
-    }
+    message += fiatConversionText;
 
     await this.sendMessage(message);
   }
