@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "./interfaces/IUniversalRouter.sol";
 import "@aave/core-v3/contracts/flashloan/interfaces/IFlashLoanReceiver.sol";
 import "@aave/core-v3/contracts/interfaces/IPool.sol";
 import "@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol";
@@ -27,7 +27,7 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
     //                                      STATE
     // =================================================================================
 
-    ISwapRouter public immutable SWAP_ROUTER;
+    IUniversalRouter public immutable UNIVERSAL_ROUTER;
     IPool public immutable POOL;
     address public immutable WETH;
     IUniswapV3Factory public immutable V3_FACTORY;
@@ -39,21 +39,13 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
     //                                    STRUCTS
     // =================================================================================
 
-    struct SwapStep {
-        uint8 dexType;
-        address tokenIn;
-        address tokenOut;
-        uint256 minAmountOut;
-        address poolOrRouter; // For UniV3, this is the pool address
-        uint24 poolFee;
-    }
-
     struct ArbParams {
         address initiator;
         address titheRecipient;
         uint256 titheBps; // 1-10000
         bool isGasEstimation;
-        SwapStep[] path;
+        bytes commands;
+        bytes[] inputs;
     }
 
     struct FlashCallbackData {
@@ -89,13 +81,13 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
     // =================================================================================
 
     constructor(
-        address _uniswapV3Router,
+        address _universalRouter,
         address _uniswapV3Factory,
         address _wethAddress,
         address _initialOwner,
         address _aaveAddressProvider
     ) Ownable(_initialOwner) {
-        SWAP_ROUTER = ISwapRouter(_uniswapV3Router);
+        UNIVERSAL_ROUTER = IUniversalRouter(_universalRouter);
         V3_FACTORY = IUniswapV3Factory(_uniswapV3Factory);
         WETH = _wethAddress;
         POOL = IPool(IPoolAddressesProvider(_aaveAddressProvider).getPool());
@@ -185,7 +177,8 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
         uint256 totalRepayment = amountBorrowed + feePaid;
         emit ArbitrageExecution(address(pool), tokenBorrowed, amountBorrowed, feePaid);
 
-        _executeSwapPath(callbackData.params.path, amountBorrowed);
+        _approveSpenderIfNeeded(tokenBorrowed, address(UNIVERSAL_ROUTER), amountBorrowed);
+        UNIVERSAL_ROUTER.execute(callbackData.params.commands, callbackData.params.inputs, block.timestamp);
 
         uint256 balanceAfterSwaps = IERC20(tokenBorrowed).balanceOf(address(this));
         if (balanceAfterSwaps < totalRepayment) revert InsufficientFundsForRepayment();
@@ -210,7 +203,8 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
         for (uint i = 0; i < assets.length; i++) {
             emit FlashLoanInitiated(address(POOL), initiator, assets[i], amounts[i]);
 
-            _executeSwapPath(arbParams.path, amounts[i]);
+            _approveSpenderIfNeeded(assets[i], address(UNIVERSAL_ROUTER), amounts[i]);
+            UNIVERSAL_ROUTER.execute(arbParams.commands, arbParams.inputs, block.timestamp);
 
             uint256 totalRepayment = amounts[i] + premiums[i];
             emit ArbitrageExecution(address(POOL), assets[i], amounts[i], premiums[i]);
@@ -232,39 +226,6 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
     // =================================================================================
     //                               INTERNAL LOGIC
     // =================================================================================
-
-    function _executeSwapPath(SwapStep[] memory path, uint256 initialAmount) internal {
-        if (path.length == 0) revert InvalidSwapPath();
-
-        uint256 amountIn = initialAmount;
-
-        for (uint i = 0; i < path.length; i++) {
-            SwapStep memory step = path[i];
-            uint256 amountOut;
-
-            if (step.dexType == DEX_TYPE_UNISWAP_V3) {
-                _approveSpenderIfNeeded(step.tokenIn, address(SWAP_ROUTER), amountIn);
-
-                ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-                    tokenIn: step.tokenIn,
-                    tokenOut: step.tokenOut,
-                    fee: step.poolFee,
-                    recipient: address(this),
-                    deadline: block.timestamp,
-                    amountIn: amountIn,
-                    amountOutMinimum: step.minAmountOut,
-                    sqrtPriceLimitX96: 0
-                });
-
-                amountOut = SWAP_ROUTER.exactInputSingle(params);
-            } else {
-                revert InvalidDexType();
-            }
-
-            emit SwapExecuted(step.dexType, step.tokenIn, step.tokenOut, amountIn, amountOut);
-            amountIn = amountOut; // Output of this step is input for the next
-        }
-    }
 
     function _distributeProfit(address token, uint256 profit, ArbParams memory params) internal {
         if (params.titheBps > 10000) revert InvalidTitheBps();
