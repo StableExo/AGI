@@ -5,6 +5,7 @@ import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
 import { FlashbotsService } from './services/FlashbotsService';
 import { CexStrategyEngine } from './services/CexStrategyEngine';
+import { FiatConversionService } from './services/FiatConversionService';
 import { TelegramAlertingService } from './services/telegram-alerting.service';
 import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
@@ -35,9 +36,11 @@ export class AppFactory {
     const executionManager = new ExecutionManager(flashbotsService, executionSigner, dataProvider);
     const strategyEngine = new StrategyEngine(dataProvider); // For DEX
     const cexStrategyEngine = new CexStrategyEngine(dataProvider); // For CEX
+    const fiatConversionService = new FiatConversionService();
     const telegramAlertingService = new TelegramAlertingService(
       process.env.TELEGRAM_BOT_TOKEN!,
-      process.env.TELEGRAM_CHAT_ID!
+      process.env.TELEGRAM_CHAT_ID!,
+      fiatConversionService
     );
 
     // --- Protocol Initialization ---
