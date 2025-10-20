@@ -33,3 +33,4 @@ nohup.out
 *.report
 *.report.md
 *.txt!requirements.lock.txt
+.keystone_checksums
