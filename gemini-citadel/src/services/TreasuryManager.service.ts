@@ -1,5 +1,5 @@
 import { ITreasuryManager, FundingRequest, FundingRequestStatus } from '../interfaces/TreasuryManager.interface';
-import { ethers, JsonRpcProvider, Contract, formatUnits, Interface } from 'ethers';
+import { JsonRpcProvider, Contract, formatUnits, Interface } from 'ethers';
 import { v4 as uuidv4 } from 'uuid';
 import { botConfig } from '../config/bot.config';
 import logger from './logger.service';
@@ -127,7 +127,7 @@ export class TreasuryManagerService implements ITreasuryManager {
     }
 
     // Define the ERC20 Transfer event signature to filter logs
-    const erc20Interface = new ethers.Interface([
+    const erc20Interface = new Interface([
       "event Transfer(address indexed from, address indexed to, uint256 value)"
     ]);
     const eventName = 'Transfer';

@@ -1,6 +1,7 @@
 import { TreasuryManagerService } from '../../src/services/TreasuryManager.service';
 import { IWalletConnector } from '../../src/interfaces/WalletConnector.interface';
-import { JsonRpcProvider, Contract, formatUnits } from 'ethers';
+import { ITelegramAlertingService } from '../../src/interfaces/TelegramAlerting.interface';
+import { JsonRpcProvider, Contract, formatUnits, Interface } from 'ethers';
 import { botConfig } from '../../src/config/bot.config';
 
 // Mock dependencies
@@ -9,6 +10,7 @@ jest.mock('ethers', () => ({
   JsonRpcProvider: jest.fn(),
   Contract: jest.fn(),
   formatUnits: jest.fn(),
+  Interface: jest.fn(),
 }));
 
 jest.mock('../../src/config/bot.config', () => ({
@@ -26,6 +28,7 @@ const mockedFormatUnits = formatUnits as jest.Mock;
 describe('TreasuryManagerService', () => {
   let treasuryManager: TreasuryManagerService;
   let mockWalletConnector: jest.Mocked<IWalletConnector>;
+  let mockAlertingService: jest.Mocked<ITelegramAlertingService>;
   let mockProviderInstance: jest.Mocked<JsonRpcProvider>;
   let mockContractInstance: jest.Mocked<Contract>;
 
@@ -33,7 +36,11 @@ describe('TreasuryManagerService', () => {
     jest.clearAllMocks();
 
     mockWalletConnector = {
-        proposeERC20Transfer: jest.fn(),
+      proposeERC20Transfer: jest.fn(),
+    } as any;
+
+    mockAlertingService = {
+      sendAlert: jest.fn(),
     } as any;
 
     mockProviderInstance = {} as unknown as jest.Mocked<JsonRpcProvider>;
@@ -44,7 +51,11 @@ describe('TreasuryManagerService', () => {
     mockedJsonRpcProvider.mockReturnValue(mockProviderInstance);
     mockedContract.mockReturnValue(mockContractInstance);
 
-    treasuryManager = new TreasuryManagerService(mockWalletConnector, 'fake_rpc_url');
+    treasuryManager = new TreasuryManagerService(
+      mockWalletConnector,
+      mockAlertingService,
+      'fake_rpc_url'
+    );
   });
 
   describe('getTreasuryBalance', () => {
