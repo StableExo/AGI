@@ -1,3 +1,1 @@
-export const fiatConfig = {
-  targetCurrencies: ['USD', 'EUR', 'JPY'],
-};
+export const FIAT_CURRENCIES = ['USD', 'EUR', 'GBP'];
