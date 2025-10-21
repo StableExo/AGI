@@ -34,3 +34,4 @@ nohup.out
 *.report.md
 *.txt!requirements.lock.txt
 .keystone_checksums
+.pip_cache/

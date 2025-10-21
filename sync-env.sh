@@ -91,14 +91,14 @@ fi
 
 if [ "$FORCE_REINSTALL" = true ]; then
     echo ">>> --force-reinstall flag detected. Forcing re-installation of Python dependencies."
-    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
+    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install --cache-dir .pip_cache -r {} \;
     echo "$CURRENT_CHECKSUM" > "$CHECKSUM_FILE"
     echo "✅ Python dependencies re-installed and checksum updated."
 elif [ "$CURRENT_CHECKSUM" = "$PREVIOUS_CHECKSUM" ]; then
     echo "✅ Python dependencies are already in sync. Skipping."
 else
     echo ">>> Checksum mismatch or first run. Installing Python dependencies."
-    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
+    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install --cache-dir .pip_cache -r {} \;
     echo "$CURRENT_CHECKSUM" > "$CHECKSUM_FILE"
     echo "✅ Python dependencies synchronized and checksum updated."
 fi
