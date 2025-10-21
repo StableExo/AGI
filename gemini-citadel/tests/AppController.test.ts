@@ -1,6 +1,7 @@
 import { AppController } from '../src/AppController';
 import { StrategyEngine } from '../src/services/strategy.service';
 import { CexStrategyEngine } from '../src/services/CexStrategyEngine';
+import { DexStrategyEngine } from '../src/services/DexStrategyEngine';
 import { ExecutionManager } from '../src/services/ExecutionManager';
 import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 import { FlashbotsService } from '../src/services/FlashbotsService';
@@ -11,6 +12,7 @@ import logger from '../src/services/logger.service';
 jest.mock('../src/services/strategy.service');
 jest.mock('../src/services/MarketIntelligenceService');
 jest.mock('../src/services/CexStrategyEngine');
+jest.mock('../src/services/DexStrategyEngine');
 jest.mock('../src/services/ExecutionManager');
 jest.mock('../src/services/FlashbotsService');
 
@@ -47,6 +49,7 @@ describe('AppController', () => {
   let appController: AppController;
   let strategyEngine: StrategyEngine;
   let cexStrategyEngine: CexStrategyEngine;
+  let dexStrategyEngine: DexStrategyEngine;
   let executionManager: ExecutionManager;
   let flashbotsService: FlashbotsService;
   let marketIntelligenceService: MarketIntelligenceService;
@@ -59,6 +62,7 @@ describe('AppController', () => {
 
     strategyEngine = new (StrategyEngine as any)(null);
     cexStrategyEngine = new (CexStrategyEngine as any)(null);
+    dexStrategyEngine = new (DexStrategyEngine as any)(null, null);
     executionManager = new (ExecutionManager as any)(null, null);
     flashbotsService = new (FlashbotsService as any)(null, null);
     marketIntelligenceService = new (MarketIntelligenceService as any)();
@@ -69,6 +73,7 @@ describe('AppController', () => {
       strategyEngine,
       flashbotsService,
       cexStrategyEngine,
+      dexStrategyEngine,
       null as any, // For TelegramAlertingService
       marketIntelligenceService
     );

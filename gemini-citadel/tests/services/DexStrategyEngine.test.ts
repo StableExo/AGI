@@ -5,9 +5,16 @@ import { ICexFetcher } from '../../src/interfaces/ICexFetcher';
 import { IFetcher } from '../../src/interfaces/IFetcher';
 
 class MockCexFetcher implements ICexFetcher {
-  constructor(private price: number) {}
+  exchangeId: string;
+
+  constructor(exchangeId: string, private price: number) {
+    this.exchangeId = exchangeId;
+  }
   async getTicker(pair: any): Promise<{ price: number; volume: number }> {
     return { price: this.price, volume: 1000 };
+  }
+  async getOrderBook(pair: any): Promise<{ bids: any[]; asks: any[] }> {
+    return { bids: [], asks: [] };
   }
 }
 
@@ -31,7 +38,7 @@ describe('DexStrategyEngine', () => {
   });
 
   it('should identify a profitable CEX-to-DEX arbitrage opportunity', async () => {
-    const cexFetcher = new MockCexFetcher(100);
+    const cexFetcher = new MockCexFetcher('btcc', 100);
     const dexFetcher = new MockDexFetcher(105);
     const cexFetchers = new Map([['btcc', cexFetcher]]);
     const dexFetchers = new Map([['uniswap', dexFetcher]]);
