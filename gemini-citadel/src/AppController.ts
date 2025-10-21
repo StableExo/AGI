@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { StrategyEngine } from './services/strategy.service';
 import { CexStrategyEngine } from './services/CexStrategyEngine';
+import { DexStrategyEngine } from './services/DexStrategyEngine';
 import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
 import { FlashbotsService } from './services/FlashbotsService';
@@ -15,6 +16,7 @@ export class AppController {
   private readonly executionManager: ExecutionManager;
   private readonly strategyEngine: StrategyEngine; // For DEX
   private readonly cexStrategyEngine: CexStrategyEngine; // For CEX
+  private readonly dexStrategyEngine: DexStrategyEngine; // For CEX/DEX
   private readonly flashbotsService: FlashbotsService;
   private readonly telegramAlertingService: TelegramAlertingService;
   private readonly marketIntelligenceService: MarketIntelligenceService;
@@ -26,6 +28,7 @@ export class AppController {
     strategyEngine: StrategyEngine,
     flashbotsService: FlashbotsService,
     cexStrategyEngine: CexStrategyEngine,
+    dexStrategyEngine: DexStrategyEngine,
     telegramAlertingService: TelegramAlertingService,
     marketIntelligenceService: MarketIntelligenceService
   ) {
@@ -34,38 +37,38 @@ export class AppController {
     this.strategyEngine = strategyEngine;
     this.flashbotsService = flashbotsService;
     this.cexStrategyEngine = cexStrategyEngine;
+    this.dexStrategyEngine = dexStrategyEngine;
     this.telegramAlertingService = telegramAlertingService;
     this.marketIntelligenceService = marketIntelligenceService;
   }
 
   public async runDexCycle(): Promise<void> {
     try {
-      logger.info(`[AppController] Starting DEX analysis cycle...`);
-      const opportunities = await this.strategyEngine.findOpportunities();
+      logger.info(`[AppController] Starting CEX/DEX analysis cycle...`);
+      const pairsToSearch = [{ base: 'BTC', quote: 'USDT' }]; // Example pair
+      const opportunities = await this.dexStrategyEngine.findOpportunities(pairsToSearch);
 
       if (opportunities.length > 0) {
-        logger.info(`[AppController] Found ${opportunities.length} DEX opportunities. Executing...`);
-        await Promise.all(
-          opportunities.map(opp =>
-            this.executionManager.executeTrade(opp, process.env.FLASH_SWAP_CONTRACT_ADDRESS!)
-          )
-        );
+        logger.info(`[AppController] Found ${opportunities.length} CEX/DEX opportunities. Executing...`);
+        for (const opp of opportunities) {
+          this.telegramAlertingService.sendArbitrageOpportunity(opp);
+        }
+        // CEX/DEX execution logic will be added here in the future
       } else {
-        logger.info(`[AppController] No DEX opportunities found in this cycle.`);
+        logger.info(`[AppController] No CEX/DEX opportunities found in this cycle.`);
       }
 
-      logger.info(`[AppController] DEX analysis cycle completed successfully.`);
+      logger.info(`[AppController] CEX/DEX analysis cycle completed successfully.`);
     } catch (error) {
-      logger.error(`[AppController] An error occurred during the DEX analysis cycle:`, error);
+      logger.error(`[AppController] An error occurred during the CEX/DEX analysis cycle:`, error);
     }
   }
 
   public async start() {
     logger.info('[AppController] Starting main execution loop...');
     // Perform an immediate run on startup, then enter the loop.
-    await this.runCexCycle(); // Prioritize CEX as per our new mission
-    // await this.runDexCycle(); // We can disable the DEX cycle to focus on CEX
-    setInterval(() => this.runCexCycle(), botConfig.loopIntervalMs);
+    await Promise.all([this.runCexCycle(), this.runDexCycle()]);
+    setInterval(() => Promise.all([this.runCexCycle(), this.runDexCycle()]), botConfig.loopIntervalMs);
   }
 
   private async sendMarketWeatherReport(): Promise<void> {
