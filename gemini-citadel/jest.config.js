@@ -6,4 +6,7 @@ module.exports = {
   roots: ['<rootDir>/tests'],
   // Point to the global mocks directory
   moduleDirectories: ['node_modules', '<rootDir>/'],
+  moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1',
+  },
 };

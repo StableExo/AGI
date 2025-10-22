@@ -1,86 +1,60 @@
-// src/services/TransactionService.ts
-import { Provider, ethers } from 'ethers';
-import { TransactionParameterPreparer } from '../havoc-core/core/tx/TransactionParameterPreparer';
-import { TransactionExecutor } from '../havoc-core/core/tx/TransactionExecutor';
-import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
-import logger from './logger.service';
-import { botConfig } from '../config/bot.config';
-import { NonceManager } from '../utils/nonceManager';
-
-const logPrefix = '[TransactionService]';
+import {
+  JsonRpcProvider,
+  TransactionRequest,
+  TransactionResponse,
+  TransactionReceipt,
+  Wallet,
+} from "ethers";
+import { IGasStrategy } from "../models/IGasStrategy";
+import { ExecutionStrategy } from "../models/ExecutionStrategy";
+import { botConfig } from "../config/bot.config";
 
 export class TransactionService {
-  private readonly preparer: TransactionParameterPreparer;
-  private readonly executor: TransactionExecutor;
-  private readonly signer: NonceManager;
-  private readonly provider: Provider;
-  private readonly config: any; // Simplified config type
+  private provider: JsonRpcProvider;
+  private gasStrategy: IGasStrategy;
+  private wallet: Wallet;
 
-  constructor(provider: Provider, signer: NonceManager) {
-    logger.info(`${logPrefix} Initializing...`);
-    this.provider = provider;
-    this.signer = signer;
-
-    // A simplified config for the executor
-    this.config = {
-      TX_CONFIRMATIONS: 1,
-    };
-
-    this.preparer = new TransactionParameterPreparer();
-    this.executor = new TransactionExecutor(this.config, this.provider, this.signer);
-    logger.info(`${logPrefix} Initialized successfully.`);
+  constructor(gasStrategy: IGasStrategy) {
+    this.provider = new JsonRpcProvider(botConfig.treasury.rpcUrl);
+    this.gasStrategy = gasStrategy;
+    // This is a placeholder. In a real environment, the private key should be managed securely.
+    const privateKey = process.env.EXECUTION_PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error("EXECUTION_PRIVATE_KEY is not set");
+    }
+    this.wallet = new Wallet(privateKey, this.provider);
   }
 
-  /**
-   * Takes a trade opportunity, prepares it, and executes it on-chain.
-   * Adheres to the EXECUTION_MODE safety protocol.
-   * @param opportunity The arbitrage opportunity to execute.
-   */
-  public async executeTrade(opportunity: ArbitrageOpportunity): Promise<{ success: boolean; txHash?: string; }> {
-    logger.info(`${logPrefix} Received trade for execution. Profit: ${opportunity.profit}`);
+  async executeTransaction(
+    tx: TransactionRequest,
+    strategy: ExecutionStrategy
+  ): Promise<TransactionReceipt> {
+    // 1. Nonce Management
+    const nonce = await this.wallet.getNonce("latest");
+    tx.nonce = nonce;
 
-    try {
-      const isDryRun = process.env.EXECUTION_MODE === 'DRY_RUN';
-      const titheRecipient = process.env.TITHE_RECIPIENT_ADDRESS || this.signer.address; // Default to self
-      const flashSwapAddress = process.env.FLASH_SWAP_CONTRACT_ADDRESS!;
+    // 2. Gas Calculation
+    const gasPrice = await this.gasStrategy.calculateGasPrice();
+    tx.maxFeePerGas = gasPrice.maxFeePerGas;
+    tx.maxPriorityFeePerGas = gasPrice.maxPriorityFeePerGas;
 
-      if (!flashSwapAddress) {
-          throw new Error("FLASH_SWAP_CONTRACT_ADDRESS is not set in the environment.");
-      }
+    // 3. Signing
+    const signedTx = await this.wallet.signTransaction(tx);
 
-      // 1. Prepare Transaction Parameters
-      const executionParams = this.preparer.prepare(
-        opportunity,
-        botConfig, // Pass the global bot config
-        this.signer.address,
-        titheRecipient
-      );
-
-      // 2. Fetch Fee Data
-      const feeData = await this.provider.getFeeData();
-
-      // 3. Execute Transaction
-      const result = await this.executor.executeTransaction(
-        flashSwapAddress,
-        executionParams.contractFunctionName,
-        executionParams.flashLoanArgs,
-        executionParams.gasLimit,
-        feeData,
-        `Profit: ${opportunity.profit}`,
-        isDryRun
-      );
-
-      if (result.success) {
-        logger.info(`${logPrefix} Execution successful. TxHash: ${result.txHash}`);
-      } else {
-        logger.error(`${logPrefix} Execution failed.`, { txHash: result.txHash });
-      }
-
-      return { success: result.success, txHash: result.txHash };
-
-    } catch (error: any) {
-      logger.error(`${logPrefix} An error occurred during trade execution: ${error.message}`, { error });
-      return { success: false };
+    // 4. Broadcasting
+    let txResponse: TransactionResponse;
+    if (strategy === ExecutionStrategy.PUBLIC) {
+      txResponse = await this.provider.broadcastTransaction(signedTx);
+    } else {
+      // Placeholder for private transaction logic (e.g., Flashbots)
+      throw new Error("Private transaction strategy not implemented.");
     }
+
+    // 5. Monitoring and Confirmation
+    const receipt = await txResponse.wait();
+    if (receipt === null) {
+      throw new Error("Transaction receipt is null.");
+    }
+    return receipt;
   }
 }
