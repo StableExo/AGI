@@ -20,9 +20,8 @@ describe('Havoc Integration Test', () => {
     appController = await AppFactory.create();
   });
 
-  it('should successfully fetch live pool data from a forked Base mainnet', async () => {
-    // We will call the runDexCycle method, which now contains our integrated UniswapV3Fetcher
-    // This will attempt to fetch data for the WETH/USDC pool on the forked network.
+  it('should successfully complete an arbitrage cycle on a forked Base mainnet', async () => {
+    // We will call the runDexCycle method, which now contains our fully integrated arbitrage engine.
     // We will capture the log output to verify the result.
 
     let logOutput = '';
@@ -35,10 +34,7 @@ describe('Havoc Integration Test', () => {
 
     console.log = originalLog; // Restore the original console.log
 
-    // Assert that the log output contains the success message and valid data
-    expect(logOutput).to.include('[AppController] Successfully fetched data for pool');
-    expect(logOutput).to.include('Liquidity:');
-    expect(logOutput).to.include('SqrtPriceX96:');
-    expect(logOutput).to.include('Tick:');
+    // Assert that the log output contains the final success message from the ArbitrageEngine
+    expect(logOutput).to.include('[ArbitrageEngine] Arbitrage cycle completed successfully.');
   }).timeout(60000); // Increase timeout to 60 seconds to allow for forking and fetching
 });

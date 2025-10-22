@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { Wallet, JsonRpcProvider } from 'ethers';
-import { StrategyEngine } from './services/strategy.service';
 import { CexStrategyEngine } from './services/CexStrategyEngine';
 import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
@@ -9,16 +8,14 @@ import { TelegramAlertingService } from './services/telegram-alerting.service';
 import { MarketIntelligenceService } from './services/MarketIntelligenceService';
 import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
-import { UniswapV3Fetcher } from './havoc-core/core/fetchers/UniswapV3Fetcher';
-import { BASE_TOKENS } from './havoc-core/constants/tokens';
 import { ArbitrageEngine } from './havoc-core/core/ArbitrageEngine';
 import { Token } from '@uniswap/sdk-core';
 import { ArbitrageOpportunity } from './models/ArbitrageOpportunity';
+import { BASE_TOKENS } from './havoc-core/constants/tokens';
 
 export class AppController {
   private readonly exchangeDataProvider: ExchangeDataProvider;
   private readonly executionManager: ExecutionManager;
-  private readonly strategyEngine: StrategyEngine; // For DEX
   private readonly cexStrategyEngine: CexStrategyEngine; // For CEX
   private readonly flashbotsService: FlashbotsService;
   private readonly telegramAlertingService: TelegramAlertingService;
@@ -29,7 +26,6 @@ export class AppController {
   constructor(
     dataProvider: ExchangeDataProvider,
     executionManager: ExecutionManager,
-    strategyEngine: StrategyEngine,
     flashbotsService: FlashbotsService,
     cexStrategyEngine: CexStrategyEngine,
     telegramAlertingService: TelegramAlertingService,
@@ -38,7 +34,6 @@ export class AppController {
   ) {
     this.exchangeDataProvider = dataProvider;
     this.executionManager = executionManager;
-    this.strategyEngine = strategyEngine;
     this.flashbotsService = flashbotsService;
     this.cexStrategyEngine = cexStrategyEngine;
     this.telegramAlertingService = telegramAlertingService;
