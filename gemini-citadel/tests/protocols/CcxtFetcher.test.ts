@@ -16,13 +16,14 @@ jest.mock('ccxt', () => ({
 
 describe('CcxtFetcher', () => {
   let binanceFetcher: CcxtFetcher;
-  const mockBinance = new ccxt.pro.binance();
+  const mockBinance = new (ccxt.pro.binance as any)();
 
   beforeEach(() => {
     // Reset mocks before each test
     (ccxt.pro.binance as jest.Mock).mockClear();
     (mockBinance.fetchTicker as jest.Mock).mockClear();
     binanceFetcher = new CcxtFetcher('binance', 'test_key', 'test_secret');
+    (binanceFetcher as any).exchange = mockBinance; // Inject the mock
   });
 
   it('should initialize the correct exchange with API credentials', () => {
@@ -47,9 +48,6 @@ describe('CcxtFetcher', () => {
       };
       (mockBinance.fetchTicker as jest.Mock).mockResolvedValue(mockTicker);
 
-      // Re-assign the fetcher to use the mocked instance
-      (binanceFetcher as any).exchange = mockBinance;
-
       const tradePair = { base: 'BTC', quote: 'USDT' };
       const ticker = await binanceFetcher.getTicker(tradePair);
 
@@ -63,7 +61,6 @@ describe('CcxtFetcher', () => {
     it('should throw an error if the ticker has no last price', async () => {
       const mockTicker = { symbol: 'BTC/USDT', baseVolume: 1000 }; // No 'last' property
       (mockBinance.fetchTicker as jest.Mock).mockResolvedValue(mockTicker);
-      (binanceFetcher as any).exchange = mockBinance;
 
       const tradePair = { base: 'BTC', quote: 'USDT' };
       await expect(binanceFetcher.getTicker(tradePair)).rejects.toThrow(
@@ -74,7 +71,6 @@ describe('CcxtFetcher', () => {
     it('should re-throw errors from the ccxt library', async () => {
       const errorMessage = 'Network Error';
       (mockBinance.fetchTicker as jest.Mock).mockRejectedValue(new Error(errorMessage));
-      (binanceFetcher as any).exchange = mockBinance;
 
       const tradePair = { base: 'BTC', quote: 'USDT' };
       await expect(binanceFetcher.getTicker(tradePair)).rejects.toThrow(errorMessage);
