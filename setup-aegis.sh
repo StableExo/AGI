@@ -3,13 +3,23 @@
 # A single, canonical script to create a stable, snapshot-ready environment.
 set -e # Exit immediately if a command fails
 
+# --- Argument Parsing ---
+SKIP_PYTHON=false
+if [ "$1" == "--skip-python" ]; then
+    SKIP_PYTHON=true
+fi
+
 echo "--- [Aegis] Starting Full Environment Setup ---"
 
 # --- 1. Synchronize Python Dependencies ---
-echo "--- [Aegis] Step: Installing Python Dependencies..."
-# We remove the checksum logic as this is a one-time clean install.
-find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
-echo "--- [Aegis] ✅ Python Dependencies Installed."
+if [ "$SKIP_PYTHON" = false ]; then
+    echo "--- [Aegis] Step: Installing Python Dependencies..."
+    # We remove the checksum logic as this is a one-time clean install.
+    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
+    echo "--- [Aegis] ✅ Python Dependencies Installed."
+else
+    echo "--- [Aegis] Step: Installing Python Dependencies... (SKIPPED)"
+fi
 
 # --- 2. Synchronize Node.js Dependencies ---
 echo ""
