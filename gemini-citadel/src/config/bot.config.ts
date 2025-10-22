@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { CoinbaseConfig } from './coinbase.config';
+import { dexConfig } from './dex.config';
 
 // The generic part of an exchange's config
 export interface BaseExchangeConfig {
@@ -28,6 +29,7 @@ export interface BotConfig {
     walletAddress: string;
     rpcUrl: string;
   };
+  dex: typeof dexConfig;
 }
 
 export const botConfig: BotConfig = {
@@ -66,5 +68,6 @@ export const botConfig: BotConfig = {
   treasury: {
     walletAddress: process.env.TREASURY_WALLET_ADDRESS || '0x9358D67164258370B0C07C37d3BF15A4c97b8Ab3',
     rpcUrl: process.env.ETH_MAINNET_RPC_URL || 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID', // Placeholder
-  }
+  },
+  dex: dexConfig,
 };
