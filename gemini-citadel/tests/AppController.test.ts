@@ -1,116 +1,92 @@
 import { AppController } from '../src/AppController';
-import { CexStrategyEngine } from '../src/services/CexStrategyEngine';
+import { ExchangeDataProvider } from '../src/services/ExchangeDataProvider';
 import { ExecutionManager } from '../src/services/ExecutionManager';
-import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 import { FlashbotsService } from '../src/services/FlashbotsService';
+import { TelegramAlertingService } from '../src/services/telegram-alerting.service';
 import { MarketIntelligenceService } from '../src/services/MarketIntelligenceService';
-import logger from '../src/services/logger.service';
+import { CexStrategyEngine } from '../src/services/CexStrategyEngine';
+import { ArbitrageEngine } from '../src/havoc-core/core/ArbitrageEngine';
+import { KafkaHealthMonitor } from '../src/services/KafkaHealthMonitor';
+import KafkaService from '../src/services/KafkaService';
+import { botConfig } from '../src/config/bot.config';
 
-// Mock the services
-jest.mock('../src/services/MarketIntelligenceService');
-jest.mock('../src/services/CexStrategyEngine');
+// Mock all service dependencies
+jest.mock('../src/services/ExchangeDataProvider');
 jest.mock('../src/services/ExecutionManager');
 jest.mock('../src/services/FlashbotsService');
+jest.mock('../src/services/telegram-alerting.service');
+jest.mock('../src/services/MarketIntelligenceService');
+jest.mock('../src/services/CexStrategyEngine'); // Mock the whole class
 jest.mock('../src/havoc-core/core/ArbitrageEngine');
-
-const mockRunCycle = jest.fn();
-const mockFindCexOpportunities = jest.fn();
-const mockExecuteTrade = jest.fn();
-
-import { ArbitrageEngine } from '../src/havoc-core/core/ArbitrageEngine';
-(ArbitrageEngine as jest.Mock).mockImplementation(() => ({
-  runCycle: mockRunCycle,
-}));
-
-(CexStrategyEngine as jest.Mock).mockImplementation(() => ({
-  findOpportunities: mockFindCexOpportunities,
-}));
-
-const mockExecuteCexTrade = jest.fn();
-
-(ExecutionManager as jest.Mock).mockImplementation(() => ({
-  executeTrade: mockExecuteTrade,
-  executeCexTrade: mockExecuteCexTrade,
-}));
-
-const mockDexOpportunity = new ArbitrageOpportunity(100, [
-  { action: 'BUY', exchange: 'exchangeA', pair: 'BTC/USDT', price: 50000, amount: 1 },
-  { action: 'SELL', exchange: 'exchangeB', pair: 'BTC/USDT', price: 50100, amount: 1 },
-]);
-
-const mockCexOpportunity = new ArbitrageOpportunity(400, [
-  { action: 'BUY', exchange: 'cex_a', pair: 'BTC/USDT', price: 50000, amount: 1 },
-  { action: 'SELL', exchange: 'cex_b', pair: 'BTC/USDT', price: 50500, amount: 1 },
-]);
+jest.mock('../src/services/KafkaHealthMonitor');
+jest.mock('../src/services/KafkaService');
 
 describe('AppController', () => {
   let appController: AppController;
-  let cexStrategyEngine: CexStrategyEngine;
-  let executionManager: ExecutionManager;
-  let flashbotsService: FlashbotsService;
-  let marketIntelligenceService: MarketIntelligenceService;
-  let arbitrageEngine: ArbitrageEngine;
+  let dataProviderMock: jest.Mocked<ExchangeDataProvider>;
+  let executionManagerMock: jest.Mocked<ExecutionManager>;
+  let flashbotsServiceMock: jest.Mocked<FlashbotsService>;
+  let telegramAlertingServiceMock: jest.Mocked<TelegramAlertingService>;
+  let marketIntelligenceServiceMock: jest.Mocked<MarketIntelligenceService>;
+  let cexStrategyEngineMock: jest.Mocked<CexStrategyEngine>;
+  let arbitrageEngineMock: jest.Mocked<ArbitrageEngine>;
+  let kafkaHealthMonitorMock: jest.Mocked<KafkaHealthMonitor>;
 
   beforeEach(() => {
-    mockRunCycle.mockClear();
-    mockFindCexOpportunities.mockClear();
-    mockExecuteTrade.mockClear();
-    mockExecuteCexTrade.mockClear();
+    // Create mock instances of all dependencies
+    dataProviderMock = new ExchangeDataProvider([]) as jest.Mocked<ExchangeDataProvider>;
+    executionManagerMock = new ExecutionManager(null as any, null as any, null as any, null as any) as jest.Mocked<ExecutionManager>;
+    flashbotsServiceMock = new FlashbotsService(null as any, null as any) as jest.Mocked<FlashbotsService>;
+    telegramAlertingServiceMock = new TelegramAlertingService(null as any, null as any, null as any) as jest.Mocked<TelegramAlertingService>;
+    marketIntelligenceServiceMock = new MarketIntelligenceService() as jest.Mocked<MarketIntelligenceService>;
+    cexStrategyEngineMock = new CexStrategyEngine(null as any, null as any) as jest.Mocked<CexStrategyEngine>;
+    arbitrageEngineMock = {
+        runCycle: jest.fn().mockResolvedValue([]),
+    } as unknown as jest.Mocked<ArbitrageEngine>;
+    kafkaHealthMonitorMock = new KafkaHealthMonitor() as jest.Mocked<KafkaHealthMonitor>;
 
-    const cexStrategyEngineMock = { findOpportunities: mockFindCexOpportunities } as any;
-    const executionManagerMock = { executeTrade: mockExecuteTrade, executeCexTrade: mockExecuteCexTrade } as any;
-    const flashbotsServiceMock = {} as any;
-    const marketIntelligenceServiceMock = {} as any;
-    const arbitrageEngineMock = { runCycle: mockRunCycle } as any;
+    (KafkaService.connect as jest.Mock).mockResolvedValue(undefined);
 
+    // Instantiate the real AppController with mocked dependencies
     appController = new AppController(
-      null as any,
+      dataProviderMock,
       executionManagerMock,
       flashbotsServiceMock,
       cexStrategyEngineMock,
-      null as any, // For TelegramAlertingService
+      telegramAlertingServiceMock,
       marketIntelligenceServiceMock,
-      arbitrageEngineMock
+      arbitrageEngineMock,
+      kafkaHealthMonitorMock
     );
   });
 
-  describe('runDexCycle', () => {
-    it('should find and execute a DEX opportunity', async () => {
-      mockRunCycle.mockResolvedValue([mockDexOpportunity]);
-      await appController.runDexCycle();
-      expect(mockRunCycle).toHaveBeenCalledTimes(1);
-      expect(mockExecuteTrade).toHaveBeenCalledWith(mockDexOpportunity);
-    });
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
-  describe('runCexCycle', () => {
-    it('should find and execute a CEX opportunity', async () => {
-      mockFindCexOpportunities.mockResolvedValue([mockCexOpportunity]);
-      await appController.runCexCycle();
-      expect(mockFindCexOpportunities).toHaveBeenCalledTimes(1);
-      expect(mockExecuteCexTrade).toHaveBeenCalledWith(mockCexOpportunity);
-    });
+  it('should initialize the nervous system on start', async () => {
+    await appController.start();
 
-    it('should not execute if no CEX opportunities are found', async () => {
-      mockFindCexOpportunities.mockResolvedValue([]);
-      await appController.runCexCycle();
-      expect(mockFindCexOpportunities).toHaveBeenCalledTimes(1);
-      expect(mockExecuteCexTrade).not.toHaveBeenCalled();
-    });
+    expect(KafkaService.connect).toHaveBeenCalledTimes(1);
+    expect(cexStrategyEngineMock.start).toHaveBeenCalledTimes(1);
   });
 
-  it('should handle errors from the CEX strategy engine gracefully', async () => {
-    const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation();
-    const testError = new Error('CEX Strategy Engine Failed');
-    mockFindCexOpportunities.mockRejectedValue(testError);
+  it('should start the DEX cycle on start', async () => {
+    await appController.start();
 
-    await appController.runCexCycle();
+    expect(arbitrageEngineMock.runCycle).toHaveBeenCalledTimes(1);
+  });
 
-    expect(mockExecuteTrade).not.toHaveBeenCalled();
-    expect(loggerErrorSpy).toHaveBeenCalledWith(
-      `[AppController] An error occurred during the CEX analysis cycle:`,
-      testError
-    );
-    loggerErrorSpy.mockRestore();
+  it('should run the DEX cycle periodically', async () => {
+      jest.useFakeTimers();
+      await appController.start();
+
+      expect(arbitrageEngineMock.runCycle).toHaveBeenCalledTimes(1);
+
+      jest.advanceTimersByTime(botConfig.loopIntervalMs);
+
+      expect(arbitrageEngineMock.runCycle).toHaveBeenCalledTimes(2);
+      jest.useRealTimers();
   });
 });

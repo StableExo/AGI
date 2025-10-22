@@ -1,92 +1,102 @@
 import { ExchangeDataProvider } from './ExchangeDataProvider';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
 import { ITradeAction } from '../models/ITradeAction';
-import { ITradePair } from '../interfaces/ITradePair';
-import { ICexFetcher } from '../interfaces/ICexFetcher';
+import { MarketDataEvent } from '../models/MarketDataEvent';
+import KafkaService from './KafkaService';
 import logger from './logger.service';
+import { ExecutionManager } from './ExecutionManager';
 
 export class CexStrategyEngine {
   private readonly dataProvider: ExchangeDataProvider;
+  private readonly executionManager: ExecutionManager;
+  // State to hold the latest market data for each exchange and symbol
+  private latestMarketData: Map<string, MarketDataEvent> = new Map();
 
-  constructor(dataProvider: ExchangeDataProvider) {
+  constructor(dataProvider: ExchangeDataProvider, executionManager: ExecutionManager) {
     this.dataProvider = dataProvider;
+    this.executionManager = executionManager;
   }
 
-  public async findOpportunities(pairs: ITradePair[]): Promise<ArbitrageOpportunity[]> {
-    const opportunities: ArbitrageOpportunity[] = [];
-    const fetchers = this.dataProvider.getAllCexFetchers();
-    const exchangeIds = Array.from(fetchers.keys());
+  /**
+   * Starts the engine to consume market data from Kafka.
+   */
+  public async start(): Promise<void> {
+    logger.info('[CexStrategyEngine] Starting consumer...');
+    // Subscribe to all raw market data topics using the correct RegExp format
+    await KafkaService.subscribe(/^market-data\.raw\..*/, (message) => {
+      if (message.value) {
+        this.handleMarketData(message.value.toString());
+      }
+    });
+  }
 
-    if (exchangeIds.length < 2) {
-      logger.warn('[CexStrategyEngine] Need at least two CEX fetchers to find arbitrage opportunities.');
-      return [];
+  /**
+   * Parses the incoming message and triggers the arbitrage check.
+   * @param messageValue The raw message string from Kafka.
+   */
+  private handleMarketData(messageValue: string): void {
+    try {
+      const event: MarketDataEvent = JSON.parse(messageValue);
+      // For this PoC, we will assume the data is valid. In production, we'd validate.
+
+      const key = `${event.exchange}:${event.symbol}`;
+
+      // Before updating our state, we check for opportunities against the new data
+      this.findArbitrage(event);
+
+      // Update the state with the latest data
+      this.latestMarketData.set(key, event);
+
+    } catch (error) {
+      logger.error('[CexStrategyEngine] Error processing Kafka message:', error);
     }
+  }
 
-    // This loop structure compares every exchange with every other exchange.
-    for (let i = 0; i < exchangeIds.length; i++) {
-      for (let j = i + 1; j < exchangeIds.length; j++) {
-        const exchangeAId = exchangeIds[i];
-        const exchangeBId = exchangeIds[j];
-        const fetcherA = fetchers.get(exchangeAId)!;
-        const fetcherB = fetchers.get(exchangeBId)!;
+  /**
+   * Finds arbitrage opportunities by comparing a new market data event against the stored state.
+   * @param newEvent The newly received MarketDataEvent.
+   */
+  private async findArbitrage(newEvent: MarketDataEvent): Promise<void> {
+    // Iterate through all stored market data points
+    for (const [key, storedEvent] of this.latestMarketData.entries()) {
+      // Check if the symbol matches but the exchange is different
+      if (newEvent.symbol === storedEvent.symbol && newEvent.exchange !== storedEvent.exchange) {
 
-        // In a real system, you'd check for common pairs. Here we iterate through a provided list.
-        for (const pair of pairs) {
-          try {
-            const [tickerA, tickerB] = await Promise.all([
-              fetcherA.getTicker(pair),
-              fetcherB.getTicker(pair),
-            ]);
+        // We have a pair to compare.
+        // Let's call the new event 'A' and the stored event 'B'
+        const tickerA = newEvent;
+        const tickerB = storedEvent;
 
-            const feeA = this.dataProvider.getCexFee(exchangeAId)!;
-            const feeB = this.dataProvider.getCexFee(exchangeBId)!;
+        const feeA = this.dataProvider.getCexFee(tickerA.exchange)!;
+        const feeB = this.dataProvider.getCexFee(tickerB.exchange)!;
 
-            // Scenario 1: Buy on A, Sell on B
-            const profit1 = (tickerB.price * (1 - feeB)) - (tickerA.price * (1 + feeA));
-            if (profit1 > 0) {
-              const buyAction: ITradeAction = {
-                action: 'BUY',
-                exchange: exchangeAId,
-                pair: `${pair.base}/${pair.quote}`,
-                price: tickerA.price,
-                amount: 1, // Assuming amount of 1 for now
-              };
-              const sellAction: ITradeAction = {
-                action: 'SELL',
-                exchange: exchangeBId,
-                pair: `${pair.base}/${pair.quote}`,
-                price: tickerB.price,
-                amount: 1,
-              };
-              opportunities.push(new ArbitrageOpportunity(profit1, [buyAction, sellAction]));
-            }
+        // Scenario 1: Buy on B, Sell on A
+        const profit1 = (tickerA.bid.price * (1 - feeA)) - (tickerB.ask.price * (1 + feeB));
+        if (profit1 > 0) {
+          const buyAction: ITradeAction = { action: 'BUY', exchange: tickerB.exchange, pair: tickerB.symbol, price: tickerB.ask.price, amount: 1 };
+          const sellAction: ITradeAction = { action: 'SELL', exchange: tickerA.exchange, pair: tickerA.symbol, price: tickerA.bid.price, amount: 1 };
+          const opportunity = new ArbitrageOpportunity(profit1, [buyAction, sellAction]);
+          logger.info(`[CexStrategyEngine] Found opportunity: ${JSON.stringify(opportunity)}`);
+          await this.executionManager.executeCexTrade(opportunity);
+        }
 
-            // Scenario 2: Buy on B, Sell on A
-            const profit2 = (tickerA.price * (1 - feeA)) - (tickerB.price * (1 + feeB));
-            if (profit2 > 0) {
-              const buyAction: ITradeAction = {
-                action: 'BUY',
-                exchange: exchangeBId,
-                pair: `${pair.base}/${pair.quote}`,
-                price: tickerB.price,
-                amount: 1,
-              };
-              const sellAction: ITradeAction = {
-                action: 'SELL',
-                exchange: exchangeAId,
-                pair: `${pair.base}/${pair.quote}`,
-                price: tickerA.price,
-                amount: 1,
-              };
-              opportunities.push(new ArbitrageOpportunity(profit2, [buyAction, sellAction]));
-            }
-          } catch (error) {
-            logger.error(`[CexStrategyEngine] Error comparing ${pair.base}/${pair.quote} between ${exchangeAId} and ${exchangeBId}:`, error);
-          }
+        // Scenario 2: Buy on A, Sell on B
+        const profit2 = (tickerB.bid.price * (1 - feeB)) - (tickerA.ask.price * (1 + feeA));
+        if (profit2 > 0) {
+          const buyAction: ITradeAction = { action: 'BUY', exchange: tickerA.exchange, pair: tickerA.symbol, price: tickerA.ask.price, amount: 1 };
+          const sellAction: ITradeAction = { action: 'SELL', exchange: tickerB.exchange, pair: tickerB.symbol, price: tickerB.bid.price, amount: 1 };
+          const opportunity = new ArbitrageOpportunity(profit2, [buyAction, sellAction]);
+          logger.info(`[CexStrategyEngine] Found opportunity: ${JSON.stringify(opportunity)}`);
+          await this.executionManager.executeCexTrade(opportunity);
         }
       }
     }
+  }
 
-    return opportunities;
+  public async stop(): Promise<void> {
+    // In a real implementation, we would gracefully stop the consumer.
+    // The current KafkaService implementation does not expose a way to stop a specific subscription,
+    // so this is a placeholder for now.
+    logger.info('[CexStrategyEngine] Stopping consumer...');
   }
 }
