@@ -7,12 +7,13 @@ import {
 import { BigNumberish, JsonRpcProvider, Wallet } from 'ethers';
 import { flashbotsUrls } from '../config/flashbots.config';
 import logger from './logger.service';
+import { NonceManager } from '../utils/nonceManager';
 
 export class FlashbotsService {
   private flashbotsProvider: FlashbotsBundleProvider | null = null;
   private authSigner: Wallet;
 
-  constructor(private provider: JsonRpcProvider, private executionSigner: Wallet) {
+  constructor(private provider: JsonRpcProvider, private executionSigner: NonceManager) {
     if (!process.env.FLASHBOTS_AUTH_KEY) {
       throw new Error('FLASHBOTS_AUTH_KEY must be set in the environment.');
     }

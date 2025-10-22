@@ -1,7 +1,5 @@
 import { AppController } from '../src/AppController';
-import { StrategyEngine } from '../src/services/strategy.service';
 import { CexStrategyEngine } from '../src/services/CexStrategyEngine';
-import { DexStrategyEngine } from '../src/services/DexStrategyEngine';
 import { ExecutionManager } from '../src/services/ExecutionManager';
 import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 import { FlashbotsService } from '../src/services/FlashbotsService';
@@ -9,19 +7,19 @@ import { MarketIntelligenceService } from '../src/services/MarketIntelligenceSer
 import logger from '../src/services/logger.service';
 
 // Mock the services
-jest.mock('../src/services/strategy.service');
 jest.mock('../src/services/MarketIntelligenceService');
 jest.mock('../src/services/CexStrategyEngine');
-jest.mock('../src/services/DexStrategyEngine');
 jest.mock('../src/services/ExecutionManager');
 jest.mock('../src/services/FlashbotsService');
+jest.mock('../src/havoc-core/core/ArbitrageEngine');
 
-const mockFindDexOpportunities = jest.fn();
+const mockRunCycle = jest.fn();
 const mockFindCexOpportunities = jest.fn();
 const mockExecuteTrade = jest.fn();
 
-(StrategyEngine as jest.Mock).mockImplementation(() => ({
-  findOpportunities: mockFindDexOpportunities,
+import { ArbitrageEngine } from '../src/havoc-core/core/ArbitrageEngine';
+(ArbitrageEngine as jest.Mock).mockImplementation(() => ({
+  runCycle: mockRunCycle,
 }));
 
 (CexStrategyEngine as jest.Mock).mockImplementation(() => ({
@@ -47,44 +45,41 @@ const mockCexOpportunity = new ArbitrageOpportunity(400, [
 
 describe('AppController', () => {
   let appController: AppController;
-  let strategyEngine: StrategyEngine;
   let cexStrategyEngine: CexStrategyEngine;
-  let dexStrategyEngine: DexStrategyEngine;
   let executionManager: ExecutionManager;
   let flashbotsService: FlashbotsService;
   let marketIntelligenceService: MarketIntelligenceService;
+  let arbitrageEngine: ArbitrageEngine;
 
   beforeEach(() => {
-    mockFindDexOpportunities.mockClear();
+    mockRunCycle.mockClear();
     mockFindCexOpportunities.mockClear();
     mockExecuteTrade.mockClear();
     mockExecuteCexTrade.mockClear();
 
-    strategyEngine = new (StrategyEngine as any)(null);
-    cexStrategyEngine = new (CexStrategyEngine as any)(null);
-    dexStrategyEngine = new (DexStrategyEngine as any)(null, null);
-    executionManager = new (ExecutionManager as any)(null, null);
-    flashbotsService = new (FlashbotsService as any)(null, null);
-    marketIntelligenceService = new (MarketIntelligenceService as any)();
+    const cexStrategyEngineMock = { findOpportunities: mockFindCexOpportunities } as any;
+    const executionManagerMock = { executeTrade: mockExecuteTrade, executeCexTrade: mockExecuteCexTrade } as any;
+    const flashbotsServiceMock = {} as any;
+    const marketIntelligenceServiceMock = {} as any;
+    const arbitrageEngineMock = { runCycle: mockRunCycle } as any;
 
     appController = new AppController(
       null as any,
-      executionManager,
-      strategyEngine,
-      flashbotsService,
-      cexStrategyEngine,
-      dexStrategyEngine,
+      executionManagerMock,
+      flashbotsServiceMock,
+      cexStrategyEngineMock,
       null as any, // For TelegramAlertingService
-      marketIntelligenceService
+      marketIntelligenceServiceMock,
+      arbitrageEngineMock
     );
   });
 
   describe('runDexCycle', () => {
     it('should find and execute a DEX opportunity', async () => {
-      mockFindDexOpportunities.mockResolvedValue([mockDexOpportunity]);
+      mockRunCycle.mockResolvedValue([mockDexOpportunity]);
       await appController.runDexCycle();
-      expect(mockFindDexOpportunities).toHaveBeenCalledTimes(1);
-      expect(mockExecuteTrade).toHaveBeenCalledWith(mockDexOpportunity, process.env.FLASH_SWAP_CONTRACT_ADDRESS);
+      expect(mockRunCycle).toHaveBeenCalledTimes(1);
+      expect(mockExecuteTrade).toHaveBeenCalledWith(mockDexOpportunity);
     });
   });
 

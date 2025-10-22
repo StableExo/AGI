@@ -1,7 +1,7 @@
 // gemini-citadel/src/havoc-core/core/tx/TransactionParameterPreparer.ts
 import { AbiCoder, Wallet } from 'ethers';
 import { ParameterBuilderFactory } from './ParameterBuilderFactory';
-import logger from '../../../../services/logger.service';
+import logger from '../../../services/logger.service';
 
 // --- Enums and Interfaces ---
 

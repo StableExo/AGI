@@ -1,7 +1,8 @@
 // gemini-citadel/src/havoc-core/core/tx/TransactionExecutor.ts
-import { ethers, Wallet, Provider, TransactionRequest, TransactionResponse, TransactionReceipt } from 'ethers';
+import { ethers, Provider, TransactionRequest, TransactionResponse, TransactionReceipt } from 'ethers';
 import logger from '../../../services/logger.service';
 import { TransactionEncoder } from './TransactionEncoder';
+import { NonceManager } from '../../../utils/nonceManager';
 
 // --- Interfaces for Dependencies ---
 
@@ -14,10 +15,10 @@ const logPrefix = '[TransactionExecutor]';
 export class TransactionExecutor {
   private readonly config: IExecutorConfig;
   private readonly provider: Provider;
-  private readonly signer: Wallet;
+  private readonly signer: NonceManager;
   private readonly encoder: TransactionEncoder;
 
-  constructor(config: IExecutorConfig, provider: Provider, signer: Wallet) {
+  constructor(config: IExecutorConfig, provider: Provider, signer: NonceManager) {
     logger.debug(`${logPrefix} Initializing...`);
     if (!config || !provider || !signer) {
       throw new Error('Config, Provider, and Signer are required for TxExecutor.');

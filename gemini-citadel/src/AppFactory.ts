@@ -10,6 +10,7 @@ import { TransactionService } from './services/TransactionService';
 import { MarketIntelligenceService } from './services/MarketIntelligenceService';
 import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
+import { NonceManager } from './utils/nonceManager';
 
 // Import CEX protocol modules
 import { CcxtFetcher } from './protocols/CcxtFetcher';
@@ -17,6 +18,7 @@ import { CcxtFetcher } from './protocols/CcxtFetcher';
 // Import DEX protocol modules
 import { UniswapV3Fetcher } from './havoc-core/core/fetchers/UniswapV3Fetcher';
 import { ArbitrageEngine } from './havoc-core/core/ArbitrageEngine';
+import { SwapSimulator } from './core/swapSimulator';
 
 export class AppFactory {
   public static async create(): Promise<AppController> {
@@ -26,12 +28,13 @@ export class AppFactory {
     // --- Core Infrastructure Initialization ---
     const provider = new JsonRpcProvider(process.env.RPC_URL!);
     const executionSigner = new Wallet(process.env.EXECUTION_PRIVATE_KEY!, provider);
+    const nonceManager = await new NonceManager(executionSigner).init();
 
     // --- Service Initialization ---
     const dataProvider = new ExchangeDataProvider([]);
-    const flashbotsService = new FlashbotsService(provider, executionSigner);
+    const flashbotsService = new FlashbotsService(provider, nonceManager);
     await flashbotsService.initialize();
-    const transactionService = new TransactionService(provider, executionSigner);
+    const transactionService = new TransactionService(provider, nonceManager);
     const executionManager = new ExecutionManager(flashbotsService, executionSigner, dataProvider, transactionService);
     const cexStrategyEngine = new CexStrategyEngine(dataProvider);
     const fiatConversionService = new FiatConversionService();
@@ -44,7 +47,8 @@ export class AppFactory {
 
     // --- Havoc Core Initialization ---
     const uniswapV3Fetcher = new UniswapV3Fetcher(provider);
-    const arbitrageEngine = new ArbitrageEngine(provider, uniswapV3Fetcher);
+    const swapSimulator = new SwapSimulator(provider, botConfig.quoterAddress);
+    const arbitrageEngine = new ArbitrageEngine(provider, uniswapV3Fetcher, swapSimulator);
 
     // --- Protocol Initialization ---
     for (const exchangeConfig of botConfig.exchanges) {
