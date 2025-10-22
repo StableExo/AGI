@@ -55,7 +55,9 @@ describe('DexStrategyEngine', () => {
     const opportunity = opportunities[0];
     expect(opportunity).toBeInstanceOf(ArbitrageOpportunity);
     // Profit = (105 * (1 - 0.003)) - (100 * (1 + 0.001)) = 104.685 - 100.1 = 4.585
-    expect(opportunity.profit).toBeCloseTo(4.585);
+    const expectedProfit = (105 * (1 - 0.003)) - (100 * (1 + 0.001));
+    const expectedProfitBigInt = BigInt(Math.trunc(expectedProfit * 1e18));
+    expect(opportunity.profit).toBe(expectedProfitBigInt);
     expect(opportunity.tradeActions[0].action).toBe('BUY');
     expect(opportunity.tradeActions[0].exchange).toBe('btcc');
     expect(opportunity.tradeActions[1].action).toBe('SELL');

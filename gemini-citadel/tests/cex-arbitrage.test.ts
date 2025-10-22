@@ -24,7 +24,7 @@ describe('CexStrategyEngine Consumer', () => {
 
         // Mock the fees for the exchanges
         dataProviderMock.getCexFee.mockImplementation((exchangeId: string) => {
-            if (exchangeId === 'binance' || exchangeId === 'btcc') {
+            if (exchangeId === 'kraken' || exchangeId === 'btcc') {
                 return 0.001; // 0.1% fee
             }
             return 0;
@@ -54,7 +54,7 @@ describe('CexStrategyEngine Consumer', () => {
         const newEvent: MarketDataEvent = {
             schema_version: '2.0.0',
             event_id: 'test-uuid-2',
-            exchange: 'binance',
+            exchange: 'kraken',
             symbol: 'BTC/USDT',
             bid: { price: 50500, quantity: 1, liquidity: 50500 }, // Higher bid
             ask: { price: 50510, quantity: 1, liquidity: 50510 },
@@ -81,7 +81,7 @@ describe('CexStrategyEngine Consumer', () => {
 
         expect(buyAction.exchange).toBe('btcc');
         expect(buyAction.price).toBe(50010);
-        expect(sellAction.exchange).toBe('binance');
+        expect(sellAction.exchange).toBe('kraken');
         expect(sellAction.price).toBe(50500);
 
         expect(capturedOpportunity.profit).toBeCloseTo(389.49);

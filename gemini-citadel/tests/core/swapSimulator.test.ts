@@ -30,7 +30,7 @@ describe('SwapSimulator', () => {
         const amountIn = 1000000000000000000n; // 1 WETH
 
         (swapSimulator as any).quoterContract.quoteExactInputSingle = {
-            staticCall: jest.fn().mockResolvedValue([2000000000n])
+            staticCall: jest.fn().mockResolvedValue(2000000000n)
         };
 
         const result = await swapSimulator.simulateV3Swap(poolState, WETH, amountIn);

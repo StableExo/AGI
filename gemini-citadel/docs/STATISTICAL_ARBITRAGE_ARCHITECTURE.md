@@ -33,7 +33,7 @@ This component is responsible for building and maintaining our sovereign histori
            │  ├──<month>/
            │  │  └──<day>.parquet
     ```
-    *Example:* `data/historical/binance/BTCUSDT/2023/10/16.parquet`
+    *Example:* `data/historical/btcc/BTCUSDT/2023/10/16.parquet`
 -   **Execution:** The pipeline can be run on a recurring schedule (e.g., daily) to append new data, ensuring our repository remains current.
 
 ### 2.2. The MarketAnalyticsService

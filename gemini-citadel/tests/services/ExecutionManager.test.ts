@@ -58,7 +58,7 @@ describe('ExecutionManager', () => {
   const createCexOpportunity = (): ArbitrageOpportunity => {
     const buyAction: ITradeAction = { action: 'BUY', exchange: 'cex_a', pair: 'BTC/USDT', price: 50000, amount: 1 };
     const sellAction: ITradeAction = { action: 'SELL', exchange: 'cex_b', pair: 'BTC/USDT', price: 50100, amount: 1 };
-    return new ArbitrageOpportunity(100, [buyAction, sellAction]);
+    return new ArbitrageOpportunity(BigInt(100), [buyAction, sellAction]);
   };
 
   it('should execute buy and sell orders on the correct CEX executors', async () => {

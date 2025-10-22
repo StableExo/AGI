@@ -2,7 +2,7 @@ export interface MarketDataEvent {
   // Core Identification
   schema_version: '2.0.0'
   event_id: string  // UUIDv4 for deduplication
-  exchange: 'btcc' | 'binance' | 'kraken' | 'coinbase'
+  exchange: 'btcc' | 'kraken' | 'coinbase'
   symbol: string    // Normalized: 'BTC/USDT'
 
   // Pricing Matrix
