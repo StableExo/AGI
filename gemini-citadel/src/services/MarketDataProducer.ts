@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const MarketDataEventSchema = z.object({
   schema_version: z.literal('2.0.0'),
   event_id: z.string().uuid(),
-  exchange: z.enum(['btcc', 'binance', 'kraken', 'coinbase']),
+  exchange: z.enum(['btcc', 'kraken', 'coinbase']),
   symbol: z.string(),
   bid: z.object({
     price: z.number(),
@@ -32,10 +32,10 @@ export const MarketDataEventSchema = z.object({
 });
 
 export abstract class MarketDataProducer {
-  protected exchange: 'btcc' | 'binance' | 'kraken' | 'coinbase';
+  protected exchange: 'btcc' | 'kraken' | 'coinbase';
   private interval: NodeJS.Timeout | null = null;
 
-  constructor(exchange: 'btcc' | 'binance' | 'kraken' | 'coinbase') {
+  constructor(exchange: 'btcc' | 'kraken' | 'coinbase') {
     this.exchange = exchange;
   }
 

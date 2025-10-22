@@ -51,7 +51,7 @@ export class DexStrategyEngine {
                 price: dexPrice,
                 amount: 1,
               };
-              opportunities.push(new ArbitrageOpportunity(profit1, [buyAction, sellAction]));
+              opportunities.push(new ArbitrageOpportunity(BigInt(Math.trunc(profit1 * 1e18)), [buyAction, sellAction]));
             }
 
             // Scenario 2: Buy on DEX, Sell on CEX
@@ -71,7 +71,7 @@ export class DexStrategyEngine {
                 price: cexPrice.price,
                 amount: 1,
               };
-              opportunities.push(new ArbitrageOpportunity(profit2, [buyAction, sellAction]));
+              opportunities.push(new ArbitrageOpportunity(BigInt(Math.trunc(profit2 * 1e18)), [buyAction, sellAction]));
             }
           } catch (error) {
             logger.error(`[DexStrategyEngine] Error comparing ${pair.base}/${pair.quote} between ${cexId} and ${dexId}:`, error);

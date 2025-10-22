@@ -4,20 +4,23 @@ import {
   FlashbotsBundleResolution,
   FlashbotsBundleTransaction,
 } from '@flashbots/ethers-provider-bundle';
-import { BigNumberish, JsonRpcProvider, Wallet } from 'ethers';
+import { JsonRpcProvider } from 'ethers';
+import { providers as providersV5, Wallet as WalletV5 } from 'ethers-v5';
 import { flashbotsUrls } from '../config/flashbots.config';
 import logger from './logger.service';
 import { NonceManager } from '../utils/nonceManager';
 
 export class FlashbotsService {
   private flashbotsProvider: FlashbotsBundleProvider | null = null;
-  private authSigner: Wallet;
+  private authSigner: WalletV5;
+  private providerV5: providersV5.StaticJsonRpcProvider;
 
   constructor(private provider: JsonRpcProvider, private executionSigner: NonceManager) {
     if (!process.env.FLASHBOTS_AUTH_KEY) {
       throw new Error('FLASHBOTS_AUTH_KEY must be set in the environment.');
     }
-    this.authSigner = new Wallet(process.env.FLASHBOTS_AUTH_KEY);
+    this.providerV5 = new providersV5.StaticJsonRpcProvider(this.provider.connection.url);
+    this.authSigner = new WalletV5(process.env.FLASHBOTS_AUTH_KEY, this.providerV5);
   }
 
   public async initialize(): Promise<void> {
@@ -31,7 +34,7 @@ export class FlashbotsService {
     }
 
     this.flashbotsProvider = await FlashbotsBundleProvider.create(
-      this.provider,
+      this.providerV5,
       this.authSigner,
       flashbotsUrls[chainId]
     );
