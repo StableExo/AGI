@@ -1,62 +1,89 @@
 import { CexStrategyEngine } from '../src/services/CexStrategyEngine';
 import { ExchangeDataProvider } from '../src/services/ExchangeDataProvider';
-import { BtccFetcher } from '../src/protocols/BtccFetcher';
-import { ICexFetcher, ITicker } from '../src/interfaces/ICexFetcher';
-import { ITradePair } from '../src/interfaces/ITradePair';
+import { ExecutionManager } from '../src/services/ExecutionManager';
+import { MarketDataEvent } from '../src/models/MarketDataEvent';
+import { ArbitrageOpportunity } from '../src/models/ArbitrageOpportunity';
 
-// Mock the fetcher to avoid actual network calls
-jest.mock('../src/protocols/BtccFetcher');
+// We only mock the dependencies, not the class under test
+jest.mock('../src/services/ExchangeDataProvider');
+jest.mock('../src/services/ExecutionManager');
 
-describe('CexStrategyEngine', () => {
-  let dataProvider: ExchangeDataProvider;
-  let strategyEngine: CexStrategyEngine;
+describe('CexStrategyEngine Consumer', () => {
+    let strategyEngine: CexStrategyEngine;
+    let dataProviderMock: jest.Mocked<ExchangeDataProvider>;
+    let executionManagerMock: jest.Mocked<ExecutionManager>;
 
-  beforeEach(() => {
-    // Reset mocks before each test
-    (BtccFetcher as jest.Mock).mockClear();
+    beforeEach(() => {
+        dataProviderMock = new ExchangeDataProvider([]) as jest.Mocked<ExchangeDataProvider>;
+        executionManagerMock = new ExecutionManager(null as any, null as any, null as any, null as any) as jest.Mocked<ExecutionManager>;
+        // We create a real instance of the engine for this test
+        strategyEngine = new CexStrategyEngine(dataProviderMock, executionManagerMock);
 
-    // Mock two different CEX fetchers for comparison
-    const mockFetcherA = new BtccFetcher() as jest.Mocked<ICexFetcher>;
-    mockFetcherA.exchangeId = 'cex_a';
-    mockFetcherA.getTicker.mockImplementation(async (pair: ITradePair): Promise<ITicker> => {
-      if (pair.base === 'BTC' && pair.quote === 'USDT') {
-        return { price: 50000, volume: 100 };
-      }
-      throw new Error('Test pair not supported');
+        // Manually initialize the private state for the test
+        (strategyEngine as any).latestMarketData = new Map<string, MarketDataEvent>();
+
+        // Mock the fees for the exchanges
+        dataProviderMock.getCexFee.mockImplementation((exchangeId: string) => {
+            if (exchangeId === 'binance' || exchangeId === 'btcc') {
+                return 0.001; // 0.1% fee
+            }
+            return 0;
+        });
     });
 
-    const mockFetcherB = new BtccFetcher() as jest.Mocked<ICexFetcher>;
-    mockFetcherB.exchangeId = 'cex_b';
-    mockFetcherB.getTicker.mockImplementation(async (pair: ITradePair): Promise<ITicker> => {
-      if (pair.base === 'BTC' && pair.quote === 'USDT') {
-        return { price: 50500, volume: 100 }; // Higher price on CEX B
-      }
-      throw new Error('Test pair not supported');
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    dataProvider = new ExchangeDataProvider([]);
-    dataProvider.registerCexFetcher('cex_a', mockFetcherA, 0.001); // 0.1% fee
-    dataProvider.registerCexFetcher('cex_b', mockFetcherB, 0.001); // 0.1% fee
+    it('should identify and execute a cross-exchange arbitrage opportunity', async () => {
+        // 1. Set up the initial state: one price is already in the engine's state
+        const storedEvent: MarketDataEvent = {
+            schema_version: '2.0.0',
+            event_id: 'test-uuid-1',
+            exchange: 'btcc',
+            symbol: 'BTC/USDT',
+            bid: { price: 50000, quantity: 1, liquidity: 50000 },
+            ask: { price: 50010, quantity: 1, liquidity: 50010 },
+            spread: 10, spread_bps: 2, volume_24h: 1000,
+            exchange_timestamp: Date.now(), processing_timestamp: Date.now(), latency_ms: 0,
+            sequence_id: 1, is_snapshot: true,
+        };
+        (strategyEngine as any).latestMarketData.set('btcc:BTC/USDT', storedEvent);
 
-    strategyEngine = new CexStrategyEngine(dataProvider);
-  });
+        // 2. A new event arrives from a different exchange with a profitable price difference
+        const newEvent: MarketDataEvent = {
+            schema_version: '2.0.0',
+            event_id: 'test-uuid-2',
+            exchange: 'binance',
+            symbol: 'BTC/USDT',
+            bid: { price: 50500, quantity: 1, liquidity: 50500 }, // Higher bid
+            ask: { price: 50510, quantity: 1, liquidity: 50510 },
+            spread: 10, spread_bps: 2, volume_24h: 1000,
+            exchange_timestamp: Date.now(), processing_timestamp: Date.now(), latency_ms: 0,
+            sequence_id: 1, is_snapshot: true,
+        };
 
-  it('should find a profitable arbitrage opportunity', async () => {
-    const pairsToSearch: ITradePair[] = [{ base: 'BTC', quote: 'USDT' }];
-    const opportunities = await strategyEngine.findOpportunities(pairsToSearch);
+        // 3. Simulate the Kafka consumer receiving the message by calling the public handler
+        await (strategyEngine as any).handleMarketData(JSON.stringify(newEvent));
 
-    expect(opportunities).toHaveLength(1);
-    const opp = opportunities[0];
+        // 4. Verify the outcome
+        expect(executionManagerMock.executeCexTrade).toHaveBeenCalledTimes(1);
 
-    expect(opp.profit).toBeCloseTo(399.5);
-    expect(opp.tradeActions).toHaveLength(2);
+        const capturedOpportunity: ArbitrageOpportunity = executionManagerMock.executeCexTrade.mock.calls[0][0];
+        expect(capturedOpportunity).toBeInstanceOf(ArbitrageOpportunity);
 
-    const buyAction = opp.tradeActions.find(a => a.action === 'BUY');
-    const sellAction = opp.tradeActions.find(a => a.action === 'SELL');
+        const buyAction = capturedOpportunity.tradeActions.find(a => a.action === 'BUY');
+        const sellAction = capturedOpportunity.tradeActions.find(a => a.action === 'SELL');
 
-    expect(buyAction?.exchange).toBe('cex_a');
-    expect(buyAction?.price).toBe(50000);
-    expect(sellAction?.exchange).toBe('cex_b');
-    expect(sellAction?.price).toBe(50500);
-  });
+        if (!buyAction || !sellAction) {
+            throw new Error('Test setup failed: buy or sell action not found');
+        }
+
+        expect(buyAction.exchange).toBe('btcc');
+        expect(buyAction.price).toBe(50010);
+        expect(sellAction.exchange).toBe('binance');
+        expect(sellAction.price).toBe(50500);
+
+        expect(capturedOpportunity.profit).toBeCloseTo(389.49);
+    });
 });
