@@ -2,7 +2,7 @@
 import { AavePathBuilder } from './builders/AavePathBuilder';
 import { TriangularPathBuilder } from './builders/TriangularPathBuilder';
 import { TwoHopV3PathBuilder } from './builders/TwoHopV3PathBuilder';
-import logger from '../../../../services/logger.service';
+import logger from '../../../services/logger.service';
 
 const logPrefix = '[ParameterBuilderFactory]';
 

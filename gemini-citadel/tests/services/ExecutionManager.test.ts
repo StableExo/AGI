@@ -5,16 +5,19 @@ import { ExchangeDataProvider } from '../../src/services/ExchangeDataProvider';
 import { ICexExecutor } from '../../src/interfaces/ICexExecutor';
 import { ITradeReceipt } from '../../src/interfaces/ITradeReceipt';
 import logger from '../../src/services/logger.service';
+import { TransactionService } from '../../src/services/TransactionService';
 
 // Mock the dependencies
 jest.mock('../../src/services/ExchangeDataProvider');
 jest.mock('../../src/services/logger.service');
+jest.mock('../../src/services/TransactionService');
 
 describe('ExecutionManager', () => {
   let executionManager: ExecutionManager;
   let mockExchangeDataProvider: jest.Mocked<ExchangeDataProvider>;
   let mockBuyExecutor: jest.Mocked<ICexExecutor>;
   let mockSellExecutor: jest.Mocked<ICexExecutor>;
+  let mockTransactionService: jest.Mocked<TransactionService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -41,11 +44,14 @@ describe('ExecutionManager', () => {
       return undefined;
     });
 
+    mockTransactionService = new (TransactionService as any)();
+
     // Instantiate the ExecutionManager with all dependencies
     executionManager = new ExecutionManager(
       null as any, // flashbots
       null as any, // signer
-      mockExchangeDataProvider
+      mockExchangeDataProvider,
+      mockTransactionService
     );
   });
 

@@ -2,6 +2,7 @@ import { FlashbotsBundleProvider, FlashbotsBundleResolution } from '@flashbots/e
 import { JsonRpcProvider, Wallet } from 'ethers';
 import { FlashbotsService } from '../../src/services/FlashbotsService';
 import logger from '../../src/services/logger.service';
+import { NonceManager } from '../../src/utils/nonceManager';
 
 // Mock the FlashbotsBundleProvider and logger
 jest.mock('@flashbots/ethers-provider-bundle', () => {
@@ -31,7 +32,7 @@ jest.spyOn(logger, 'warn').mockImplementation(() => logger);
 describe('FlashbotsService', () => {
   let flashbotsService: FlashbotsService;
   let mockProvider: JsonRpcProvider;
-  let mockExecutionSigner: Wallet;
+  let mockNonceManager: NonceManager;
 
   beforeEach(() => {
     // Set up environment variables
@@ -41,9 +42,10 @@ describe('FlashbotsService', () => {
     mockProvider = {
       getNetwork: jest.fn().mockResolvedValue({ chainId: 1 }),
     } as unknown as JsonRpcProvider;
-    mockExecutionSigner = new Wallet(process.env.FLASHBOTS_AUTH_KEY);
+    const mockSigner = new Wallet(process.env.FLASHBOTS_AUTH_KEY);
+    mockNonceManager = { getSigner: () => mockSigner } as any;
 
-    flashbotsService = new FlashbotsService(mockProvider, mockExecutionSigner);
+    flashbotsService = new FlashbotsService(mockProvider, mockNonceManager);
   });
 
   afterEach(() => {

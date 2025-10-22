@@ -1,21 +1,22 @@
 // src/services/TransactionService.ts
-import { Wallet, Provider, ethers } from 'ethers';
+import { Provider, ethers } from 'ethers';
 import { TransactionParameterPreparer } from '../havoc-core/core/tx/TransactionParameterPreparer';
 import { TransactionExecutor } from '../havoc-core/core/tx/TransactionExecutor';
 import { ArbitrageOpportunity } from '../models/ArbitrageOpportunity';
 import logger from './logger.service';
 import { botConfig } from '../config/bot.config';
+import { NonceManager } from '../utils/nonceManager';
 
 const logPrefix = '[TransactionService]';
 
 export class TransactionService {
   private readonly preparer: TransactionParameterPreparer;
   private readonly executor: TransactionExecutor;
-  private readonly signer: Wallet;
+  private readonly signer: NonceManager;
   private readonly provider: Provider;
   private readonly config: any; // Simplified config type
 
-  constructor(provider: Provider, signer: Wallet) {
+  constructor(provider: Provider, signer: NonceManager) {
     logger.info(`${logPrefix} Initializing...`);
     this.provider = provider;
     this.signer = signer;
