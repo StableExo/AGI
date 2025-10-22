@@ -1,6 +1,5 @@
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { AppController } from './AppController';
-import { StrategyEngine } from './services/strategy.service';
 import { ExchangeDataProvider } from './services/ExchangeDataProvider';
 import { ExecutionManager } from './services/ExecutionManager';
 import { FlashbotsService } from './services/FlashbotsService';
@@ -32,7 +31,6 @@ export class AppFactory {
     const flashbotsService = new FlashbotsService(provider, executionSigner);
     await flashbotsService.initialize();
     const executionManager = new ExecutionManager(flashbotsService, executionSigner, dataProvider);
-    const strategyEngine = new StrategyEngine(dataProvider);
     const cexStrategyEngine = new CexStrategyEngine(dataProvider);
     const fiatConversionService = new FiatConversionService();
     const telegramAlertingService = new TelegramAlertingService(
@@ -47,15 +45,14 @@ export class AppFactory {
     const arbitrageEngine = new ArbitrageEngine(provider, uniswapV3Fetcher);
 
     // --- Protocol Initialization ---
-    // (This loop can be removed if we are not using the old CEX fetcher system for now)
     for (const exchangeConfig of botConfig.exchanges) {
       if (exchangeConfig.enabled && exchangeConfig.type === 'CEX') {
         const cexFetcher = new CcxtFetcher(
-          exchangeConfig.name,
-          exchangeConfig.apiKey,
-          exchangeConfig.apiSecret
+          exchange.name,
+          exchange.apiKey,
+          exchange.apiSecret
         );
-        dataProvider.registerCexFetcher(exchangeConfig.name, cexFetcher, exchangeConfig.fee);
+        dataProvider.registerCexFetcher(exchange.name, cexFetcher, exchange.fee);
       }
     }
 
@@ -63,7 +60,6 @@ export class AppFactory {
     return new AppController(
       dataProvider,
       executionManager,
-      strategyEngine,
       flashbotsService,
       cexStrategyEngine,
       telegramAlertingService,
