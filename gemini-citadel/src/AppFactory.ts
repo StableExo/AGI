@@ -57,14 +57,14 @@ export class AppFactory {
     const arbitrageEngine = new ArbitrageEngine(provider, uniswapV3Fetcher, swapSimulator);
 
     // --- Protocol Initialization ---
-    for (const exchangeConfig of botConfig.exchanges) {
+    for (const [exchangeName, exchangeConfig] of Object.entries(botConfig.exchanges)) {
       if (exchangeConfig.enabled && exchangeConfig.type === 'CEX') {
         const cexFetcher = new CcxtFetcher(
-          exchangeConfig.name,
+          exchangeName,
           exchangeConfig.apiKey,
           exchangeConfig.apiSecret
         );
-        dataProvider.registerCexFetcher(exchangeConfig.name, cexFetcher, exchangeConfig.fee);
+        dataProvider.registerCexFetcher(exchangeName, cexFetcher, exchangeConfig.fee);
       }
     }
 
