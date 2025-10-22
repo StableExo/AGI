@@ -53,11 +53,15 @@ export class AppController {
       const opportunities: ArbitrageOpportunity[] = await this.arbitrageEngine.runCycle(poolConfigs);
 
       if (opportunities.length > 0) {
-        logger.info(`[AppController] Found ${opportunities.length} DEX opportunities. Logging...`);
-        opportunities.forEach(opp => {
+        logger.info(`[AppController] Found ${opportunities.length} DEX opportunities. Executing...`);
+        for (const opp of opportunities) {
           this.telegramAlertingService.sendArbitrageOpportunity(opp);
-        });
-        // In the future, we will pass these to the ExecutionManager.
+          if (opp.profit > botConfig.significantTradeThreshold) {
+            await this.sendMarketWeatherReport();
+          }
+          // Pass the opportunity to the ExecutionManager for on-chain execution
+          await this.executionManager.executeTrade(opp);
+        }
       } else {
         logger.info(`[AppController] No DEX opportunities found in this cycle.`);
       }

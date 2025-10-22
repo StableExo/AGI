@@ -6,6 +6,7 @@ import { FlashbotsService } from './services/FlashbotsService';
 import { CexStrategyEngine } from './services/CexStrategyEngine';
 import { FiatConversionService } from './services/FiatConversionService';
 import { TelegramAlertingService } from './services/telegram-alerting.service';
+import { TransactionService } from './services/TransactionService';
 import { MarketIntelligenceService } from './services/MarketIntelligenceService';
 import { botConfig } from './config/bot.config';
 import logger from './services/logger.service';
@@ -30,7 +31,8 @@ export class AppFactory {
     const dataProvider = new ExchangeDataProvider([]);
     const flashbotsService = new FlashbotsService(provider, executionSigner);
     await flashbotsService.initialize();
-    const executionManager = new ExecutionManager(flashbotsService, executionSigner, dataProvider);
+    const transactionService = new TransactionService(provider, executionSigner);
+    const executionManager = new ExecutionManager(flashbotsService, executionSigner, dataProvider, transactionService);
     const cexStrategyEngine = new CexStrategyEngine(dataProvider);
     const fiatConversionService = new FiatConversionService();
     const telegramAlertingService = new TelegramAlertingService(
