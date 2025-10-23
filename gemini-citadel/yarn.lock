@@ -465,12 +465,10 @@
     ethereum-cryptography "^2.2.1"
     ethers "^6.14.0"
 
-"@nomicfoundation/hardhat-ignition-ethers@^3.0.0":
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-ignition-ethers/-/hardhat-ignition-ethers-3.0.3.tgz#51c7c2acf1138e39635d481d1aa5be2414d7485d"
-  integrity sha512-TfiHLbOKGqDLmtIHpo3dKg9sPTx5HCPih2NdvQvRTI3kb2+GwBuFOYSF9k5jHXtSch25E9HfCc2aqA7SgsnS2A==
-  dependencies:
-    "@nomicfoundation/hardhat-errors" "^3.0.2"
+"@nomicfoundation/hardhat-ignition-ethers@^0.15.0":
+  version "0.15.14"
+  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-ignition-ethers/-/hardhat-ignition-ethers-0.15.14.tgz#383baf0d949d37b3a0e2ee54b1040ecfe8683e0f"
+  integrity sha512-eq+5n+c1DW18/Xp8/QrHBBvG5QaKUxYF/byol4f1jrnZ1zAy0OrqEa/oaNFWchhpLalX7d7suk/2EL0PbT0CDQ==
 
 "@nomicfoundation/hardhat-ignition@^3.0.0":
   version "3.0.3"
