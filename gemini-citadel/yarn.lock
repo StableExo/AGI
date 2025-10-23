@@ -527,6 +527,11 @@
   resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-toolbox-mocha-ethers/-/hardhat-toolbox-mocha-ethers-3.0.0.tgz#9abb600521b60980221a644c807ca184dfbc9392"
   integrity sha512-2WiLWh701im222k/rdSPaQSQzR5RdrpaIVbsGt9z42zqZoEmehoYidUcVrIWG1ocAvfHS9LuxHo6nBd0xMHRnQ==
 
+"@nomicfoundation/hardhat-toolbox@^6.1.0":
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-toolbox/-/hardhat-toolbox-6.1.0.tgz#946b95983c308610c649513ec4e73736fe1318d8"
+  integrity sha512-iAIl6pIK3F4R3JXeq+b6tiShXUrp1sQRiPfqoCMUE7QLUzoFifzGV97IDRL6e73pWsMKpUQBsHBvTCsqn+ZdpA==
+
 "@nomicfoundation/hardhat-typechain@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-typechain/-/hardhat-typechain-3.0.0.tgz#255b5dc7e196c5a186504d610d0eee7ddaec732a"

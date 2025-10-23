@@ -13,6 +13,7 @@
     "@nomicfoundation/hardhat-keystore": "^3.0.0",
     "@nomicfoundation/hardhat-mocha": "^3.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^3.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-typechain": "^3.0.0",
     "@nomicfoundation/hardhat-verify": "^3.0.0",
