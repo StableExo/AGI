@@ -1,5 +1,4 @@
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
 import 'dotenv/config';
 
 const config: HardhatUserConfig = {
