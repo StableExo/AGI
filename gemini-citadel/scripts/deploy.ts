@@ -5,7 +5,7 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
 
   const _uniswapV3Router = "0x2626664c2603336E57B271c5C0b26F421741e481";
-  const _aavePool = "0x0000000000000000000000000000000000000000";
+  const _aavePool = "0x0000000000000000000000000000000000000000"; // Note: This is a placeholder address
   const _uniswapV3Factory = "0x33128a8fC17869897dcE68Ed026d694621f6FDfD";
   const _wethAddress = "0x4200000000000000000000000000000000000006";
   const _initialOwner = deployer.address;
@@ -19,9 +19,9 @@ async function main() {
     _initialOwner
   );
 
-  await flashSwap.waitForDeployment();
-
-  const flashSwapAddress = await flashSwap.getAddress()
+  // In ethers v6, the deploy method waits for the transaction to be mined
+  // and the address is available on the 'target' property.
+  const flashSwapAddress = flashSwap.target;
 
   console.log(`Deployed FlashSwap to: ${flashSwapAddress}`);
 }

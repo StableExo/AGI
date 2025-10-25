@@ -1,6 +1,6 @@
-const { HardhatUserConfig } = require("hardhat/config");
-require("@nomicfoundation/hardhat-toolbox");
-require('dotenv/config');
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "dotenv/config";
 
 const forkingConfig = process.env.RPC_URL
   ? {
@@ -49,6 +49,9 @@ const config: HardhatUserConfig = {
     enabled: true,
     currency: "USD",
   },
+  mocha: {
+    timeout: 120000, // 120 seconds
+  },
 };
 
-module.exports = config;
+export default config;
