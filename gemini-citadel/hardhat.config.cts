@@ -1,5 +1,12 @@
-import { HardhatUserConfig } from "hardhat/config";
-import 'dotenv/config';
+const { HardhatUserConfig } = require("hardhat/config");
+require("@nomicfoundation/hardhat-toolbox");
+require('dotenv/config');
+
+const forkingConfig = process.env.RPC_URL
+  ? {
+      url: process.env.RPC_URL,
+    }
+  : undefined;
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -9,35 +16,39 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200
+            runs: 200,
           },
-          viaIR: true
-        }
+          viaIR: true,
+        },
       },
       {
         version: "0.8.24",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200
+            runs: 200,
           },
-          viaIR: true
-        }
-      }
-    ]
+          viaIR: true,
+        },
+      },
+    ],
   },
   networks: {
     hardhat: {
-      forking: {
-        url: process.env.RPC_URL || '',
-      },
-      hardfork: "cancun"
+      forking: forkingConfig,
+      hardfork: "cancun",
     },
     base: {
-      url: process.env.RPC_URL || '',
-      accounts: process.env.EXECUTION_PRIVATE_KEY ? [process.env.EXECUTION_PRIVATE_KEY] : [],
+      url: process.env.RPC_URL || "",
+      accounts: process.env.EXECUTION_PRIVATE_KEY
+        ? [process.env.EXECUTION_PRIVATE_KEY]
+        : [],
     },
+  },
+  gasReporter: {
+    enabled: true,
+    currency: "USD",
   },
 };
 
-export default config;
+module.exports = config;

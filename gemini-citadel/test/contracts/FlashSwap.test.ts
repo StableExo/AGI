@@ -1,11 +1,11 @@
 import { expect } from "chai";
-import hre from "hardhat";
+import pkg from "hardhat";
+const { ethers } = pkg;
 
 describe("FlashSwap", function () {
   let flashSwap: any;
 
   beforeEach(async function () {
-    const { ethers } = hre;
     const [deployer] = await ethers.getSigners();
 
     const universalRouter = "0x0000000000000000000000000000000000000001";

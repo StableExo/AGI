@@ -2,9 +2,9 @@
 import 'dotenv/config';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { AppController } from '../../src/AppController';
-import { AppFactory } from '../../src/AppFactory';
-import { botConfig } from '../../src/config/bot.config';
+import { AppController } from '../../src/AppController.js';
+import { AppFactory } from '../../src/AppFactory.js';
+import { botConfig } from '../../src/config/bot.config.js';
 import { JsonRpcProvider } from 'ethers';
 
 describe('Havoc Integration Test', () => {
