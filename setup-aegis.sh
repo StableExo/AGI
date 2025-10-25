@@ -17,7 +17,7 @@ if [ "$SKIP_PYTHON" = false ]; then
     echo "--- [Aegis] Step: Installing Python Dependencies..."
     # V2.0 CHANGE: Ensure pip itself is up-to-date before installing packages.
     pip install --upgrade pip
-    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install -r {} \;
+    find . -name 'requirements.txt' -not -path './Aegis/*' -exec pip install --cache-dir .pip_cache -r {} \;
     echo "--- [Aegis] ✅ Python Dependencies Installed."
 else
     echo "--- [Aegis] Step: Installing Python Dependencies... (SKIPPED)"
