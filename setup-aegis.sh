@@ -26,6 +26,9 @@ fi
 # --- 2. Sanitize and Synchronize Node.js Dependencies ---
 echo ""
 echo "--- [Aegis] Step: Sanitizing Node.js Environment (gemini-citadel)..."
+# V3.0 MIGRATION: Eradicate the old dependency tree to ensure a clean slate.
+rm -rf gemini-citadel/node_modules
+rm -f gemini-citadel/yarn.lock
 # V2.0 CHANGE: Remove the conflicting npm lockfile to ensure a clean Yarn environment.
 rm -f gemini-citadel/package-lock.json
 echo "--- [Aegis] Step: Installing Node.js Dependencies..."
