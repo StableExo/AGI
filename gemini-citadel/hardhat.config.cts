@@ -1,6 +1,6 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "dotenv/config";
+const { HardhatUserConfig } = require("hardhat/config");
+require("@nomicfoundation/hardhat-toolbox");
+require("dotenv/config");
 
 const forkingConfig = process.env.RPC_URL
   ? {
@@ -8,7 +8,7 @@ const forkingConfig = process.env.RPC_URL
     }
   : undefined;
 
-const config: HardhatUserConfig = {
+const config = {
   solidity: {
     compilers: [
       {
@@ -54,4 +54,4 @@ const config: HardhatUserConfig = {
   },
 };
 
-export default config;
+module.exports = config;
