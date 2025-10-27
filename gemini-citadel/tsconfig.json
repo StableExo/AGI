@@ -12,10 +12,5 @@
     "declaration": true,
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"],
-  "exclude": ["node_modules"],
-  "ts-node": {
-    "compilerOptions": {
-      "module": "CommonJS"
-    }
-  }
+  "exclude": ["node_modules"]
 }
