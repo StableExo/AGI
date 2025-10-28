@@ -31,7 +31,10 @@
   },
   "dependencies": {
     "@aave/core-v3": "^1.19.3",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@uniswap/v3-core": "^1.0.1",
     "async-mutex": "^0.5.0",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "forge-std": "^1.1.2"
   }
 }
