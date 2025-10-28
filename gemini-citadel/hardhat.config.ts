@@ -1,29 +1,19 @@
 import { HardhatUserConfig } from "hardhat/config";
+// Import the recommended toolbox plugin
+import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+import "@nomicfoundation/hardhat-ignition-ethers";
 
 const config: HardhatUserConfig = {
+  // Plugins must be declared in this array
+  plugins: [hardhatToolboxMochaEthers],
   solidity: {
-    compilers: [
-      {
-        version: "0.8.20",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-          viaIR: true,
-        },
+    version: "0.8.24",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
       },
-      {
-        version: "0.8.24",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-          viaIR: true,
-        },
-      },
-    ],
+    },
   },
 };
 
