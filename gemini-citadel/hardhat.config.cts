@@ -1,15 +1,14 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox-mocha-ethers";
-import "@nomicfoundation/hardhat-ignition-ethers";
-import "dotenv/config";
+require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-ignition-ethers");
+require("dotenv/config");
 
 const privateKey = process.env.EXECUTION_PRIVATE_KEY;
 if (!privateKey) {
   console.warn("EXECUTION_PRIVATE_KEY is not set in the environment. Deployments will fail.");
 }
 
-const config: HardhatUserConfig = {
-  plugins: [hardhatToolboxMochaEthers],
+/** @type import('hardhat/config').HardhatUserConfig */
+const config = {
   solidity: {
     version: "0.8.24",
     settings: {
@@ -28,4 +27,4 @@ const config: HardhatUserConfig = {
   },
 };
 
-export default config;
+module.exports = config;
