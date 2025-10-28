@@ -401,7 +401,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     backUnbacked: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, ],
       [bigint],
-      'nonpayable'
+      'view'
     >
 
 
@@ -409,7 +409,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     borrow: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: BigNumberish, arg4: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -417,7 +417,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     configureEModeCategory: TypedContractMethod<
       [arg0: BigNumberish, arg1: DataTypes.EModeCategoryStruct, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -425,7 +425,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     deposit: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -433,7 +433,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     dropReserve: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -441,7 +441,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     finalizeTransfer: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: BigNumberish, arg4: BigNumberish, arg5: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -449,7 +449,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     flashLoan: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike[], arg2: BigNumberish[], arg3: BigNumberish[], arg4: AddressLike, arg5: BytesLike, arg6: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -457,7 +457,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     flashLoanSimple: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: BytesLike, arg4: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -545,7 +545,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     initReserve: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: AddressLike, arg4: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -553,7 +553,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     liquidationCall: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: BigNumberish, arg4: boolean, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -561,7 +561,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     mintToTreasury: TypedContractMethod<
       [arg0: AddressLike[], ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -569,7 +569,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     mintUnbacked: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -577,7 +577,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     rebalanceStableBorrowRate: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -585,7 +585,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     repay: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: AddressLike, ],
       [bigint],
-      'nonpayable'
+      'view'
     >
 
 
@@ -593,7 +593,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     repayWithATokens: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, ],
       [bigint],
-      'nonpayable'
+      'view'
     >
 
 
@@ -601,7 +601,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     repayWithPermit: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: AddressLike, arg4: BigNumberish, arg5: BigNumberish, arg6: BytesLike, arg7: BytesLike, ],
       [bigint],
-      'nonpayable'
+      'view'
     >
 
 
@@ -609,7 +609,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     rescueTokens: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -617,7 +617,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     resetIsolationModeTotalDebt: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -625,7 +625,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     setConfiguration: TypedContractMethod<
       [arg0: AddressLike, arg1: DataTypes.ReserveConfigurationMapStruct, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -633,7 +633,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     setReserveInterestRateStrategyAddress: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -641,7 +641,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     setUserEMode: TypedContractMethod<
       [arg0: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -649,7 +649,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     setUserUseReserveAsCollateral: TypedContractMethod<
       [arg0: AddressLike, arg1: boolean, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -657,7 +657,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     supply: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -665,7 +665,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     supplyWithPermit: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, arg4: BigNumberish, arg5: BigNumberish, arg6: BytesLike, arg7: BytesLike, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -673,7 +673,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     swapBorrowRateMode: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -681,7 +681,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     updateBridgeProtocolFee: TypedContractMethod<
       [arg0: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -689,7 +689,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     updateFlashloanPremiums: TypedContractMethod<
       [arg0: BigNumberish, arg1: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >
 
 
@@ -697,7 +697,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     withdraw: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
       [bigint],
-      'nonpayable'
+      'view'
     >
 
 
@@ -737,42 +737,42 @@ getFunction(nameOrSignature: 'MAX_STABLE_RATE_BORROW_SIZE_PERCENT'): TypedContra
 getFunction(nameOrSignature: 'backUnbacked'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, ],
       [bigint],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'borrow'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: BigNumberish, arg4: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'configureEModeCategory'): TypedContractMethod<
       [arg0: BigNumberish, arg1: DataTypes.EModeCategoryStruct, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'deposit'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'dropReserve'): TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'finalizeTransfer'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: BigNumberish, arg4: BigNumberish, arg5: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'flashLoan'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike[], arg2: BigNumberish[], arg3: BigNumberish[], arg4: AddressLike, arg5: BytesLike, arg6: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'flashLoanSimple'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: BytesLike, arg4: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'getConfiguration'): TypedContractMethod<
       [arg0: AddressLike, ],
@@ -827,102 +827,102 @@ getFunction(nameOrSignature: 'getUserEMode'): TypedContractMethod<
 getFunction(nameOrSignature: 'initReserve'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: AddressLike, arg4: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'liquidationCall'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: BigNumberish, arg4: boolean, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'mintToTreasury'): TypedContractMethod<
       [arg0: AddressLike[], ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'mintUnbacked'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'rebalanceStableBorrowRate'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'repay'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: AddressLike, ],
       [bigint],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'repayWithATokens'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, ],
       [bigint],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'repayWithPermit'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: AddressLike, arg4: BigNumberish, arg5: BigNumberish, arg6: BytesLike, arg7: BytesLike, ],
       [bigint],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'rescueTokens'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'resetIsolationModeTotalDebt'): TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'setConfiguration'): TypedContractMethod<
       [arg0: AddressLike, arg1: DataTypes.ReserveConfigurationMapStruct, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'setReserveInterestRateStrategyAddress'): TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'setUserEMode'): TypedContractMethod<
       [arg0: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'setUserUseReserveAsCollateral'): TypedContractMethod<
       [arg0: AddressLike, arg1: boolean, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'supply'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'supplyWithPermit'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, arg4: BigNumberish, arg5: BigNumberish, arg6: BytesLike, arg7: BytesLike, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'swapBorrowRateMode'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'updateBridgeProtocolFee'): TypedContractMethod<
       [arg0: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'updateFlashloanPremiums'): TypedContractMethod<
       [arg0: BigNumberish, arg1: BigNumberish, ],
       [void],
-      'nonpayable'
+      'view'
     >;
 getFunction(nameOrSignature: 'withdraw'): TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
       [bigint],
-      'nonpayable'
+      'view'
     >;
 
     getEvent(key: 'BackUnbacked'): TypedContractEvent<BackUnbackedEvent.InputTuple, BackUnbackedEvent.OutputTuple, BackUnbackedEvent.OutputObject>;
