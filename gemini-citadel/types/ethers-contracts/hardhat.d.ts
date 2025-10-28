@@ -10,29 +10,25 @@ import * as Contracts from "./index.js";
 
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
-  getContractFactory(name: 'Counter', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.Counter__factory>
-getContractFactory(name: 'FlashSwap', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.FlashSwap__factory>
+  getContractFactory(name: 'FlashSwap', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.FlashSwap__factory>
 getContractFactory(name: 'IQuoterV2', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IQuoterV2__factory>
 getContractFactory(name: 'IUniversalRouter', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IUniversalRouter__factory>
 getContractFactory(name: 'MockPool', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MockPool__factory>
 getContractFactory(name: 'MockPoolAddressesProvider', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MockPoolAddressesProvider__factory>
 
-  getContractAt(name: 'Counter', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Counter>
-getContractAt(name: 'FlashSwap', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.FlashSwap>
+  getContractAt(name: 'FlashSwap', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.FlashSwap>
 getContractAt(name: 'IQuoterV2', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IQuoterV2>
 getContractAt(name: 'IUniversalRouter', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IUniversalRouter>
 getContractAt(name: 'MockPool', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MockPool>
 getContractAt(name: 'MockPoolAddressesProvider', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MockPoolAddressesProvider>
 
-  deployContract(name: 'Counter', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Counter>
-deployContract(name: 'FlashSwap', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.FlashSwap>
+  deployContract(name: 'FlashSwap', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.FlashSwap>
 deployContract(name: 'IQuoterV2', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IQuoterV2>
 deployContract(name: 'IUniversalRouter', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IUniversalRouter>
 deployContract(name: 'MockPool', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockPool>
 deployContract(name: 'MockPoolAddressesProvider', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockPoolAddressesProvider>
 
-  deployContract(name: 'Counter', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Counter>
-deployContract(name: 'FlashSwap', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.FlashSwap>
+  deployContract(name: 'FlashSwap', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.FlashSwap>
 deployContract(name: 'IQuoterV2', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IQuoterV2>
 deployContract(name: 'IUniversalRouter', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IUniversalRouter>
 deployContract(name: 'MockPool', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockPool>

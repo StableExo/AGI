@@ -3,5 +3,4 @@
 /* eslint-disable */
 export * as interfaces from './interfaces/index.js';
 export * as test from './test/index.js';
-export { Counter__factory } from './Counter__factory.js';
 export { FlashSwap__factory } from './FlashSwap__factory.js';
