@@ -101,15 +101,14 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
     //                              EXTERNAL FUNCTIONS
     // =================================================================================
 
-    function initiateAaveFlashLoan(address[] calldata assets, uint256[] calldata amounts, uint256[] calldata modes, bytes calldata params, uint16 referralCode) public payable onlyOwner {
+    function initiateAaveFlashLoan(address asset, uint256 amount, bytes calldata params) public payable onlyOwner {
         address receiverAddress = address(this);
+        uint16 referralCode = 0; // Per instructions
 
-        try POOL.flashLoan(
+        try POOL.flashLoanSimple(
             receiverAddress,
-            assets,
-            amounts,
-            modes,
-            address(this),
+            asset,
+            amount,
             params,
             referralCode
         ) {} catch (bytes memory reason) {
@@ -198,26 +197,30 @@ contract FlashSwap is IUniswapV3FlashCallback, IFlashLoanReceiver, ReentrancyGua
         address initiator,
         bytes calldata params
     ) external override nonReentrant returns (bool) {
+        // flashLoanSimple provides arrays with a single element.
+        address asset = assets[0];
+        uint256 amount = amounts[0];
+        uint256 premium = premiums[0];
+
         ArbParams memory arbParams = abi.decode(params, (ArbParams));
 
-        for (uint i = 0; i < assets.length; i++) {
-            emit FlashLoanInitiated(address(POOL), initiator, assets[i], amounts[i]);
+        emit FlashLoanInitiated(address(POOL), initiator, asset, amount);
 
-            _approveSpenderIfNeeded(assets[i], address(UNIVERSAL_ROUTER), amounts[i]);
-            UNIVERSAL_ROUTER.execute(arbParams.commands, arbParams.inputs, block.timestamp);
+        _approveSpenderIfNeeded(asset, address(UNIVERSAL_ROUTER), amount);
+        UNIVERSAL_ROUTER.execute(arbParams.commands, arbParams.inputs, block.timestamp);
 
-            uint256 totalRepayment = amounts[i] + premiums[i];
-            emit ArbitrageExecution(address(POOL), assets[i], amounts[i], premiums[i]);
+        uint256 totalRepayment = amount + premium;
+        emit ArbitrageExecution(address(POOL), asset, amount, premium);
 
-            uint256 balanceAfterSwaps = IERC20(assets[i]).balanceOf(address(this));
-            if (balanceAfterSwaps < totalRepayment) revert InsufficientFundsForRepayment();
+        uint256 balanceAfterSwaps = IERC20(asset).balanceOf(address(this));
+        if (balanceAfterSwaps < totalRepayment) revert InsufficientFundsForRepayment();
 
-            _approveSpenderIfNeeded(assets[i], address(POOL), totalRepayment);
+        // Approve Aave Pool to pull back funds for repayment.
+        _approveSpenderIfNeeded(asset, address(POOL), totalRepayment);
 
-            uint256 netProfit = balanceAfterSwaps - totalRepayment;
-            if (netProfit > 0 && !arbParams.isGasEstimation) {
-                _distributeProfit(assets[i], netProfit, arbParams);
-            }
+        uint256 netProfit = balanceAfterSwaps - totalRepayment;
+        if (netProfit > 0 && !arbParams.isGasEstimation) {
+            _distributeProfit(asset, netProfit, arbParams);
         }
 
         return true;
