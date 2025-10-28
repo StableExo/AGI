@@ -3,7 +3,7 @@
 /* eslint-disable */
 import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from "ethers"
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from "./common.js"
-
+  
 
   export interface FlashSwapInterface extends Interface {
     getFunction(nameOrSignature: "ADDRESSES_PROVIDER" | "POOL" | "UNIVERSAL_ROUTER" | "V3_FACTORY" | "WETH" | "executeOperation" | "initiateAaveFlashLoan" | "initiateUniswapV3FlashLoan" | "owner" | "renounceOwnership" | "transferOwnership" | "uniswapV3FlashCallback"): FunctionFragment;
@@ -37,7 +37,7 @@ decodeFunctionResult(functionFragment: 'transferOwnership', data: BytesLike): Re
 decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike): Result;
   }
 
-
+  
     export namespace ArbitrageExecutionEvent {
       export type InputTuple = [loanSource: AddressLike, tokenBorrowed: AddressLike, amountBorrowed: BigNumberish, feePaid: BigNumberish];
       export type OutputTuple = [loanSource: string, tokenBorrowed: string, amountBorrowed: bigint, feePaid: bigint];
@@ -48,7 +48,7 @@ decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace FlashLoanInitiatedEvent {
       export type InputTuple = [loanSource: AddressLike, initiator: AddressLike, asset: AddressLike, amount: BigNumberish];
@@ -60,7 +60,7 @@ decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace OwnershipTransferredEvent {
       export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
@@ -72,7 +72,7 @@ decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace ProfitDistributionEvent {
       export type InputTuple = [initiator: AddressLike, titheRecipient: AddressLike, token: AddressLike, profitAmount: BigNumberish, titheAmount: BigNumberish];
@@ -84,7 +84,7 @@ decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace SwapExecutedEvent {
       export type InputTuple = [dexType: BigNumberish, tokenIn: AddressLike, tokenOut: AddressLike, amountIn: BigNumberish, amountOut: BigNumberish];
@@ -96,16 +96,16 @@ decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
   export interface FlashSwap extends BaseContract {
-
+    
     connect(runner?: ContractRunner | null): FlashSwap;
     waitForDeployment(): Promise<this>;
 
     interface: FlashSwapInterface;
 
-
+    
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
@@ -119,7 +119,7 @@ decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike
 
   on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   on<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
-
+  
   once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   once<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
 
@@ -130,102 +130,102 @@ decodeFunctionResult(functionFragment: 'uniswapV3FlashCallback', data: BytesLike
   removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>
 
 
-
-
+    
+    
     ADDRESSES_PROVIDER: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     POOL: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     UNIVERSAL_ROUTER: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     V3_FACTORY: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     WETH: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     executeOperation: TypedContractMethod<
       [assets: AddressLike[], amounts: BigNumberish[], premiums: BigNumberish[], initiator: AddressLike, params: BytesLike, ],
       [boolean],
       'nonpayable'
     >
+    
 
-
-
+    
     initiateAaveFlashLoan: TypedContractMethod<
       [assets: AddressLike[], amounts: BigNumberish[], modes: BigNumberish[], params: BytesLike, referralCode: BigNumberish, ],
       [void],
       'payable'
     >
+    
 
-
-
+    
     initiateUniswapV3FlashLoan: TypedContractMethod<
       [_pool: AddressLike, _token: AddressLike, _amount: BigNumberish, _data: BytesLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     owner: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     renounceOwnership: TypedContractMethod<
       [],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     transferOwnership: TypedContractMethod<
       [newOwner: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     uniswapV3FlashCallback: TypedContractMethod<
       [fee0: BigNumberish, fee1: BigNumberish, data: BytesLike, ],
       [void],
       'nonpayable'
     >
-
+    
 
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
@@ -298,25 +298,25 @@ getEvent(key: 'ProfitDistribution'): TypedContractEvent<ProfitDistributionEvent.
 getEvent(key: 'SwapExecuted'): TypedContractEvent<SwapExecutedEvent.InputTuple, SwapExecutedEvent.OutputTuple, SwapExecutedEvent.OutputObject>;
 
     filters: {
-
+      
       'ArbitrageExecution(address,address,uint256,uint256)': TypedContractEvent<ArbitrageExecutionEvent.InputTuple, ArbitrageExecutionEvent.OutputTuple, ArbitrageExecutionEvent.OutputObject>;
       ArbitrageExecution: TypedContractEvent<ArbitrageExecutionEvent.InputTuple, ArbitrageExecutionEvent.OutputTuple, ArbitrageExecutionEvent.OutputObject>;
-
+    
 
       'FlashLoanInitiated(address,address,address,uint256)': TypedContractEvent<FlashLoanInitiatedEvent.InputTuple, FlashLoanInitiatedEvent.OutputTuple, FlashLoanInitiatedEvent.OutputObject>;
       FlashLoanInitiated: TypedContractEvent<FlashLoanInitiatedEvent.InputTuple, FlashLoanInitiatedEvent.OutputTuple, FlashLoanInitiatedEvent.OutputObject>;
-
+    
 
       'OwnershipTransferred(address,address)': TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
       OwnershipTransferred: TypedContractEvent<OwnershipTransferredEvent.InputTuple, OwnershipTransferredEvent.OutputTuple, OwnershipTransferredEvent.OutputObject>;
-
+    
 
       'ProfitDistribution(address,address,address,uint256,uint256)': TypedContractEvent<ProfitDistributionEvent.InputTuple, ProfitDistributionEvent.OutputTuple, ProfitDistributionEvent.OutputObject>;
       ProfitDistribution: TypedContractEvent<ProfitDistributionEvent.InputTuple, ProfitDistributionEvent.OutputTuple, ProfitDistributionEvent.OutputObject>;
-
+    
 
       'SwapExecuted(uint8,address,address,uint256,uint256)': TypedContractEvent<SwapExecutedEvent.InputTuple, SwapExecutedEvent.OutputTuple, SwapExecutedEvent.OutputObject>;
       SwapExecuted: TypedContractEvent<SwapExecutedEvent.InputTuple, SwapExecutedEvent.OutputTuple, SwapExecutedEvent.OutputObject>;
-
+    
     };
   }

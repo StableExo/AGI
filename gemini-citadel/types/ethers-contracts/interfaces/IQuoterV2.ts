@@ -3,28 +3,28 @@
 /* eslint-disable */
 import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, AddressLike, ContractRunner, ContractMethod, Listener } from "ethers"
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedListener, TypedContractMethod } from "../common.js"
-
+  
 
   export interface IQuoterV2Interface extends Interface {
     getFunction(nameOrSignature: "quoteExactInputSingle"): FunctionFragment;
 
-
+    
 
     encodeFunctionData(functionFragment: 'quoteExactInputSingle', values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BigNumberish]): string;
 
     decodeFunctionResult(functionFragment: 'quoteExactInputSingle', data: BytesLike): Result;
   }
 
-
+  
 
   export interface IQuoterV2 extends BaseContract {
-
+    
     connect(runner?: ContractRunner | null): IQuoterV2;
     waitForDeployment(): Promise<this>;
 
     interface: IQuoterV2Interface;
 
-
+    
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
@@ -38,7 +38,7 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
 
   on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   on<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
-
+  
   once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   once<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
 
@@ -49,14 +49,14 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>
 
 
-
-
+    
+    
     quoteExactInputSingle: TypedContractMethod<
       [tokenIn: AddressLike, tokenOut: AddressLike, fee: BigNumberish, amountIn: BigNumberish, sqrtPriceLimitX96: BigNumberish, ],
       [[bigint, bigint, bigint, bigint] & {amountOut: bigint, sqrtPriceX96After: bigint, initializedTicksCrossed: bigint, gasEstimate: bigint }],
       'nonpayable'
     >
-
+    
 
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
@@ -67,9 +67,9 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
       'nonpayable'
     >;
 
-
+    
 
     filters: {
-
+      
     };
   }

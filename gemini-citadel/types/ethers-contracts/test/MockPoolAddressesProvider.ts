@@ -3,7 +3,7 @@
 /* eslint-disable */
 import type { BaseContract, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from "ethers"
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from "../common.js"
-
+  
 
   export interface MockPoolAddressesProviderInterface extends Interface {
     getFunction(nameOrSignature: "getACLAdmin" | "getACLManager" | "getAddress" | "getMarketId" | "getOwner" | "getPool" | "getPoolConfigurator" | "getPoolConfiguratorImpl" | "getPoolDataProvider" | "getPoolImpl" | "getPriceOracle" | "getPriceOracleSentinel" | "setACLAdmin" | "setACLManager" | "setAddress" | "setAddressAsProxy" | "setMarketId" | "setOwner" | "setPoolConfiguratorImpl" | "setPoolDataProvider" | "setPoolImpl" | "setPriceOracle" | "setPriceOracleSentinel"): FunctionFragment;
@@ -59,7 +59,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracle', data: BytesLike): Resul
 decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike): Result;
   }
 
-
+  
     export namespace ACLAdminUpdatedEvent {
       export type InputTuple = [oldAddress: AddressLike, newAddress: AddressLike];
       export type OutputTuple = [oldAddress: string, newAddress: string];
@@ -70,7 +70,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace ACLManagerUpdatedEvent {
       export type InputTuple = [oldAddress: AddressLike, newAddress: AddressLike];
@@ -82,7 +82,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace AddressSetEvent {
       export type InputTuple = [id: BytesLike, oldAddress: AddressLike, newAddress: AddressLike];
@@ -94,7 +94,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace AddressSetAsProxyEvent {
       export type InputTuple = [id: BytesLike, proxyAddress: AddressLike, oldImplementationAddress: AddressLike, newImplementationAddress: AddressLike];
@@ -106,7 +106,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace MarketIdSetEvent {
       export type InputTuple = [oldMarketId: string, newMarketId: string];
@@ -118,7 +118,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace PoolConfiguratorUpdatedEvent {
       export type InputTuple = [oldAddress: AddressLike, newAddress: AddressLike];
@@ -130,7 +130,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace PoolDataProviderUpdatedEvent {
       export type InputTuple = [oldAddress: AddressLike, newAddress: AddressLike];
@@ -142,7 +142,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace PoolUpdatedEvent {
       export type InputTuple = [oldAddress: AddressLike, newAddress: AddressLike];
@@ -154,7 +154,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace PriceOracleSentinelUpdatedEvent {
       export type InputTuple = [oldAddress: AddressLike, newAddress: AddressLike];
@@ -166,7 +166,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace PriceOracleUpdatedEvent {
       export type InputTuple = [oldAddress: AddressLike, newAddress: AddressLike];
@@ -178,7 +178,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace ProxyCreatedEvent {
       export type InputTuple = [id: BytesLike, proxyAddress: AddressLike, implementationAddress: AddressLike];
@@ -190,16 +190,16 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
   export interface MockPoolAddressesProvider extends BaseContract {
-
+    
     connect(runner?: ContractRunner | null): MockPoolAddressesProvider;
     waitForDeployment(): Promise<this>;
 
     interface: MockPoolAddressesProviderInterface;
 
-
+    
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
@@ -213,7 +213,7 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
 
   on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   on<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
-
+  
   once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   once<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
 
@@ -224,190 +224,190 @@ decodeFunctionResult(functionFragment: 'setPriceOracleSentinel', data: BytesLike
   removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>
 
 
-
-
+    
+    
     getACLAdmin: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getACLManager: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getAddress: TypedContractMethod<
       [arg0: BytesLike, ],
       [string],
       'view'
     >
+    
 
-
-
+    
     getMarketId: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getOwner: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getPool: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getPoolConfigurator: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getPoolConfiguratorImpl: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getPoolDataProvider: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getPoolImpl: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getPriceOracle: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     getPriceOracleSentinel: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     setACLAdmin: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setACLManager: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setAddress: TypedContractMethod<
       [arg0: BytesLike, arg1: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setAddressAsProxy: TypedContractMethod<
       [arg0: BytesLike, arg1: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setMarketId: TypedContractMethod<
       [arg0: string, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setOwner: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setPoolConfiguratorImpl: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setPoolDataProvider: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setPoolImpl: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setPriceOracle: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
+    
 
-
-
+    
     setPriceOracleSentinel: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'nonpayable'
     >
-
+    
 
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
@@ -541,49 +541,49 @@ getEvent(key: 'PriceOracleUpdated'): TypedContractEvent<PriceOracleUpdatedEvent.
 getEvent(key: 'ProxyCreated'): TypedContractEvent<ProxyCreatedEvent.InputTuple, ProxyCreatedEvent.OutputTuple, ProxyCreatedEvent.OutputObject>;
 
     filters: {
-
+      
       'ACLAdminUpdated(address,address)': TypedContractEvent<ACLAdminUpdatedEvent.InputTuple, ACLAdminUpdatedEvent.OutputTuple, ACLAdminUpdatedEvent.OutputObject>;
       ACLAdminUpdated: TypedContractEvent<ACLAdminUpdatedEvent.InputTuple, ACLAdminUpdatedEvent.OutputTuple, ACLAdminUpdatedEvent.OutputObject>;
-
+    
 
       'ACLManagerUpdated(address,address)': TypedContractEvent<ACLManagerUpdatedEvent.InputTuple, ACLManagerUpdatedEvent.OutputTuple, ACLManagerUpdatedEvent.OutputObject>;
       ACLManagerUpdated: TypedContractEvent<ACLManagerUpdatedEvent.InputTuple, ACLManagerUpdatedEvent.OutputTuple, ACLManagerUpdatedEvent.OutputObject>;
-
+    
 
       'AddressSet(bytes32,address,address)': TypedContractEvent<AddressSetEvent.InputTuple, AddressSetEvent.OutputTuple, AddressSetEvent.OutputObject>;
       AddressSet: TypedContractEvent<AddressSetEvent.InputTuple, AddressSetEvent.OutputTuple, AddressSetEvent.OutputObject>;
-
+    
 
       'AddressSetAsProxy(bytes32,address,address,address)': TypedContractEvent<AddressSetAsProxyEvent.InputTuple, AddressSetAsProxyEvent.OutputTuple, AddressSetAsProxyEvent.OutputObject>;
       AddressSetAsProxy: TypedContractEvent<AddressSetAsProxyEvent.InputTuple, AddressSetAsProxyEvent.OutputTuple, AddressSetAsProxyEvent.OutputObject>;
-
+    
 
       'MarketIdSet(string,string)': TypedContractEvent<MarketIdSetEvent.InputTuple, MarketIdSetEvent.OutputTuple, MarketIdSetEvent.OutputObject>;
       MarketIdSet: TypedContractEvent<MarketIdSetEvent.InputTuple, MarketIdSetEvent.OutputTuple, MarketIdSetEvent.OutputObject>;
-
+    
 
       'PoolConfiguratorUpdated(address,address)': TypedContractEvent<PoolConfiguratorUpdatedEvent.InputTuple, PoolConfiguratorUpdatedEvent.OutputTuple, PoolConfiguratorUpdatedEvent.OutputObject>;
       PoolConfiguratorUpdated: TypedContractEvent<PoolConfiguratorUpdatedEvent.InputTuple, PoolConfiguratorUpdatedEvent.OutputTuple, PoolConfiguratorUpdatedEvent.OutputObject>;
-
+    
 
       'PoolDataProviderUpdated(address,address)': TypedContractEvent<PoolDataProviderUpdatedEvent.InputTuple, PoolDataProviderUpdatedEvent.OutputTuple, PoolDataProviderUpdatedEvent.OutputObject>;
       PoolDataProviderUpdated: TypedContractEvent<PoolDataProviderUpdatedEvent.InputTuple, PoolDataProviderUpdatedEvent.OutputTuple, PoolDataProviderUpdatedEvent.OutputObject>;
-
+    
 
       'PoolUpdated(address,address)': TypedContractEvent<PoolUpdatedEvent.InputTuple, PoolUpdatedEvent.OutputTuple, PoolUpdatedEvent.OutputObject>;
       PoolUpdated: TypedContractEvent<PoolUpdatedEvent.InputTuple, PoolUpdatedEvent.OutputTuple, PoolUpdatedEvent.OutputObject>;
-
+    
 
       'PriceOracleSentinelUpdated(address,address)': TypedContractEvent<PriceOracleSentinelUpdatedEvent.InputTuple, PriceOracleSentinelUpdatedEvent.OutputTuple, PriceOracleSentinelUpdatedEvent.OutputObject>;
       PriceOracleSentinelUpdated: TypedContractEvent<PriceOracleSentinelUpdatedEvent.InputTuple, PriceOracleSentinelUpdatedEvent.OutputTuple, PriceOracleSentinelUpdatedEvent.OutputObject>;
-
+    
 
       'PriceOracleUpdated(address,address)': TypedContractEvent<PriceOracleUpdatedEvent.InputTuple, PriceOracleUpdatedEvent.OutputTuple, PriceOracleUpdatedEvent.OutputObject>;
       PriceOracleUpdated: TypedContractEvent<PriceOracleUpdatedEvent.InputTuple, PriceOracleUpdatedEvent.OutputTuple, PriceOracleUpdatedEvent.OutputObject>;
-
+    
 
       'ProxyCreated(bytes32,address,address)': TypedContractEvent<ProxyCreatedEvent.InputTuple, ProxyCreatedEvent.OutputTuple, ProxyCreatedEvent.OutputObject>;
       ProxyCreated: TypedContractEvent<ProxyCreatedEvent.InputTuple, ProxyCreatedEvent.OutputTuple, ProxyCreatedEvent.OutputObject>;
-
+    
     };
   }

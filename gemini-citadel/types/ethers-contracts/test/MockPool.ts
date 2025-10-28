@@ -3,28 +3,28 @@
 /* eslint-disable */
 import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from "ethers"
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from "../common.js"
-
+  
 export declare namespace DataTypes {
-
+      
     export type EModeCategoryStruct = {ltv: BigNumberish, liquidationThreshold: BigNumberish, liquidationBonus: BigNumberish, priceSource: AddressLike, label: string}
 
     export type EModeCategoryStructOutput = [ltv: bigint, liquidationThreshold: bigint, liquidationBonus: bigint, priceSource: string, label: string] & {ltv: bigint, liquidationThreshold: bigint, liquidationBonus: bigint, priceSource: string, label: string }
-
+  
 
     export type ReserveConfigurationMapStruct = {data: BigNumberish}
 
     export type ReserveConfigurationMapStructOutput = [data: bigint] & {data: bigint }
-
+  
 
     export type ReserveDataStruct = {configuration: DataTypes.ReserveConfigurationMapStruct, liquidityIndex: BigNumberish, currentLiquidityRate: BigNumberish, variableBorrowIndex: BigNumberish, currentVariableBorrowRate: BigNumberish, currentStableBorrowRate: BigNumberish, lastUpdateTimestamp: BigNumberish, id: BigNumberish, aTokenAddress: AddressLike, stableDebtTokenAddress: AddressLike, variableDebtTokenAddress: AddressLike, interestRateStrategyAddress: AddressLike, accruedToTreasury: BigNumberish, unbacked: BigNumberish, isolationModeTotalDebt: BigNumberish}
 
     export type ReserveDataStructOutput = [configuration: DataTypes.ReserveConfigurationMapStructOutput, liquidityIndex: bigint, currentLiquidityRate: bigint, variableBorrowIndex: bigint, currentVariableBorrowRate: bigint, currentStableBorrowRate: bigint, lastUpdateTimestamp: bigint, id: bigint, aTokenAddress: string, stableDebtTokenAddress: string, variableDebtTokenAddress: string, interestRateStrategyAddress: string, accruedToTreasury: bigint, unbacked: bigint, isolationModeTotalDebt: bigint] & {configuration: DataTypes.ReserveConfigurationMapStructOutput, liquidityIndex: bigint, currentLiquidityRate: bigint, variableBorrowIndex: bigint, currentVariableBorrowRate: bigint, currentStableBorrowRate: bigint, lastUpdateTimestamp: bigint, id: bigint, aTokenAddress: string, stableDebtTokenAddress: string, variableDebtTokenAddress: string, interestRateStrategyAddress: string, accruedToTreasury: bigint, unbacked: bigint, isolationModeTotalDebt: bigint }
-
+  
 
     export type UserConfigurationMapStruct = {data: BigNumberish}
 
     export type UserConfigurationMapStructOutput = [data: bigint] & {data: bigint }
-
+  
     }
 
   export interface MockPoolInterface extends Interface {
@@ -123,7 +123,7 @@ decodeFunctionResult(functionFragment: 'updateFlashloanPremiums', data: BytesLik
 decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
   }
 
-
+  
     export namespace BackUnbackedEvent {
       export type InputTuple = [reserve: AddressLike, backer: AddressLike, amount: BigNumberish, fee: BigNumberish];
       export type OutputTuple = [reserve: string, backer: string, amount: bigint, fee: bigint];
@@ -134,7 +134,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace BorrowEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike, onBehalfOf: AddressLike, amount: BigNumberish, interestRateMode: BigNumberish, borrowRate: BigNumberish, referralCode: BigNumberish];
@@ -146,7 +146,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace FlashLoanEvent {
       export type InputTuple = [target: AddressLike, initiator: AddressLike, asset: AddressLike, amount: BigNumberish, interestRateMode: BigNumberish, premium: BigNumberish, referralCode: BigNumberish];
@@ -158,7 +158,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace IsolationModeTotalDebtUpdatedEvent {
       export type InputTuple = [asset: AddressLike, totalDebt: BigNumberish];
@@ -170,7 +170,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace LiquidationCallEvent {
       export type InputTuple = [collateralAsset: AddressLike, debtAsset: AddressLike, user: AddressLike, debtToCover: BigNumberish, liquidatedCollateralAmount: BigNumberish, liquidator: AddressLike, receiveAToken: boolean];
@@ -182,7 +182,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace MintUnbackedEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike, onBehalfOf: AddressLike, amount: BigNumberish, referralCode: BigNumberish];
@@ -194,7 +194,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace MintedToTreasuryEvent {
       export type InputTuple = [reserve: AddressLike, amountMinted: BigNumberish];
@@ -206,7 +206,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace RebalanceStableBorrowRateEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike];
@@ -218,7 +218,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace RepayEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike, repayer: AddressLike, amount: BigNumberish, useATokens: boolean];
@@ -230,7 +230,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace ReserveDataUpdatedEvent {
       export type InputTuple = [reserve: AddressLike, liquidityRate: BigNumberish, stableBorrowRate: BigNumberish, variableBorrowRate: BigNumberish, liquidityIndex: BigNumberish, variableBorrowIndex: BigNumberish];
@@ -242,7 +242,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace ReserveUsedAsCollateralDisabledEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike];
@@ -254,7 +254,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace ReserveUsedAsCollateralEnabledEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike];
@@ -266,7 +266,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace SupplyEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike, onBehalfOf: AddressLike, amount: BigNumberish, referralCode: BigNumberish];
@@ -278,7 +278,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace SwapBorrowRateModeEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike, interestRateMode: BigNumberish];
@@ -290,7 +290,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace UserEModeSetEvent {
       export type InputTuple = [user: AddressLike, categoryId: BigNumberish];
@@ -302,7 +302,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
     export namespace WithdrawEvent {
       export type InputTuple = [reserve: AddressLike, user: AddressLike, to: AddressLike, amount: BigNumberish];
@@ -314,16 +314,16 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
       export type LogDescription = TypedLogDescription<Event>
     }
 
-
+  
 
   export interface MockPool extends BaseContract {
-
+    
     connect(runner?: ContractRunner | null): MockPool;
     waitForDeployment(): Promise<this>;
 
     interface: MockPoolInterface;
 
-
+    
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
@@ -337,7 +337,7 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
 
   on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   on<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
-
+  
   once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   once<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
 
@@ -348,358 +348,358 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
   removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>
 
 
-
-
+    
+    
     ADDRESSES_PROVIDER: TypedContractMethod<
       [],
       [string],
       'view'
     >
+    
 
-
-
+    
     BRIDGE_PROTOCOL_FEE: TypedContractMethod<
       [],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     FLASHLOAN_PREMIUM_TOTAL: TypedContractMethod<
       [],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     FLASHLOAN_PREMIUM_TO_PROTOCOL: TypedContractMethod<
       [],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     MAX_NUMBER_RESERVES: TypedContractMethod<
       [],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     MAX_STABLE_RATE_BORROW_SIZE_PERCENT: TypedContractMethod<
       [],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     backUnbacked: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, ],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     borrow: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: BigNumberish, arg4: AddressLike, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     configureEModeCategory: TypedContractMethod<
       [arg0: BigNumberish, arg1: DataTypes.EModeCategoryStruct, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     deposit: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     dropReserve: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     finalizeTransfer: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: BigNumberish, arg4: BigNumberish, arg5: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     flashLoan: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike[], arg2: BigNumberish[], arg3: BigNumberish[], arg4: AddressLike, arg5: BytesLike, arg6: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     flashLoanSimple: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: BytesLike, arg4: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     getConfiguration: TypedContractMethod<
       [arg0: AddressLike, ],
       [DataTypes.ReserveConfigurationMapStructOutput],
       'view'
     >
+    
 
-
-
+    
     getEModeCategoryData: TypedContractMethod<
       [arg0: BigNumberish, ],
       [DataTypes.EModeCategoryStructOutput],
       'view'
     >
+    
 
-
-
+    
     getReserveAddressById: TypedContractMethod<
       [arg0: BigNumberish, ],
       [string],
       'view'
     >
+    
 
-
-
+    
     getReserveData: TypedContractMethod<
       [arg0: AddressLike, ],
       [DataTypes.ReserveDataStructOutput],
       'view'
     >
+    
 
-
-
+    
     getReserveNormalizedIncome: TypedContractMethod<
       [arg0: AddressLike, ],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     getReserveNormalizedVariableDebt: TypedContractMethod<
       [arg0: AddressLike, ],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     getReservesList: TypedContractMethod<
       [],
       [string[]],
       'view'
     >
+    
 
-
-
+    
     getUserAccountData: TypedContractMethod<
       [arg0: AddressLike, ],
       [[bigint, bigint, bigint, bigint, bigint, bigint]],
       'view'
     >
+    
 
-
-
+    
     getUserConfiguration: TypedContractMethod<
       [arg0: AddressLike, ],
       [DataTypes.UserConfigurationMapStructOutput],
       'view'
     >
+    
 
-
-
+    
     getUserEMode: TypedContractMethod<
       [arg0: AddressLike, ],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     initReserve: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: AddressLike, arg4: AddressLike, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     liquidationCall: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: AddressLike, arg3: BigNumberish, arg4: boolean, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     mintToTreasury: TypedContractMethod<
       [arg0: AddressLike[], ],
       [void],
       'view'
     >
+    
 
-
-
+    
     mintUnbacked: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     rebalanceStableBorrowRate: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     repay: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: AddressLike, ],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     repayWithATokens: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, ],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     repayWithPermit: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: BigNumberish, arg3: AddressLike, arg4: BigNumberish, arg5: BigNumberish, arg6: BytesLike, arg7: BytesLike, ],
       [bigint],
       'view'
     >
+    
 
-
-
+    
     rescueTokens: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     resetIsolationModeTotalDebt: TypedContractMethod<
       [arg0: AddressLike, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     setConfiguration: TypedContractMethod<
       [arg0: AddressLike, arg1: DataTypes.ReserveConfigurationMapStruct, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     setReserveInterestRateStrategyAddress: TypedContractMethod<
       [arg0: AddressLike, arg1: AddressLike, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     setUserEMode: TypedContractMethod<
       [arg0: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     setUserUseReserveAsCollateral: TypedContractMethod<
       [arg0: AddressLike, arg1: boolean, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     supply: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     supplyWithPermit: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, arg3: BigNumberish, arg4: BigNumberish, arg5: BigNumberish, arg6: BytesLike, arg7: BytesLike, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     swapBorrowRateMode: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     updateBridgeProtocolFee: TypedContractMethod<
       [arg0: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     updateFlashloanPremiums: TypedContractMethod<
       [arg0: BigNumberish, arg1: BigNumberish, ],
       [void],
       'view'
     >
+    
 
-
-
+    
     withdraw: TypedContractMethod<
       [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
       [bigint],
       'view'
     >
-
+    
 
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
@@ -943,69 +943,69 @@ getEvent(key: 'UserEModeSet'): TypedContractEvent<UserEModeSetEvent.InputTuple, 
 getEvent(key: 'Withdraw'): TypedContractEvent<WithdrawEvent.InputTuple, WithdrawEvent.OutputTuple, WithdrawEvent.OutputObject>;
 
     filters: {
-
+      
       'BackUnbacked(address,address,uint256,uint256)': TypedContractEvent<BackUnbackedEvent.InputTuple, BackUnbackedEvent.OutputTuple, BackUnbackedEvent.OutputObject>;
       BackUnbacked: TypedContractEvent<BackUnbackedEvent.InputTuple, BackUnbackedEvent.OutputTuple, BackUnbackedEvent.OutputObject>;
-
+    
 
       'Borrow(address,address,address,uint256,uint8,uint256,uint16)': TypedContractEvent<BorrowEvent.InputTuple, BorrowEvent.OutputTuple, BorrowEvent.OutputObject>;
       Borrow: TypedContractEvent<BorrowEvent.InputTuple, BorrowEvent.OutputTuple, BorrowEvent.OutputObject>;
-
+    
 
       'FlashLoan(address,address,address,uint256,uint8,uint256,uint16)': TypedContractEvent<FlashLoanEvent.InputTuple, FlashLoanEvent.OutputTuple, FlashLoanEvent.OutputObject>;
       FlashLoan: TypedContractEvent<FlashLoanEvent.InputTuple, FlashLoanEvent.OutputTuple, FlashLoanEvent.OutputObject>;
-
+    
 
       'IsolationModeTotalDebtUpdated(address,uint256)': TypedContractEvent<IsolationModeTotalDebtUpdatedEvent.InputTuple, IsolationModeTotalDebtUpdatedEvent.OutputTuple, IsolationModeTotalDebtUpdatedEvent.OutputObject>;
       IsolationModeTotalDebtUpdated: TypedContractEvent<IsolationModeTotalDebtUpdatedEvent.InputTuple, IsolationModeTotalDebtUpdatedEvent.OutputTuple, IsolationModeTotalDebtUpdatedEvent.OutputObject>;
-
+    
 
       'LiquidationCall(address,address,address,uint256,uint256,address,bool)': TypedContractEvent<LiquidationCallEvent.InputTuple, LiquidationCallEvent.OutputTuple, LiquidationCallEvent.OutputObject>;
       LiquidationCall: TypedContractEvent<LiquidationCallEvent.InputTuple, LiquidationCallEvent.OutputTuple, LiquidationCallEvent.OutputObject>;
-
+    
 
       'MintUnbacked(address,address,address,uint256,uint16)': TypedContractEvent<MintUnbackedEvent.InputTuple, MintUnbackedEvent.OutputTuple, MintUnbackedEvent.OutputObject>;
       MintUnbacked: TypedContractEvent<MintUnbackedEvent.InputTuple, MintUnbackedEvent.OutputTuple, MintUnbackedEvent.OutputObject>;
-
+    
 
       'MintedToTreasury(address,uint256)': TypedContractEvent<MintedToTreasuryEvent.InputTuple, MintedToTreasuryEvent.OutputTuple, MintedToTreasuryEvent.OutputObject>;
       MintedToTreasury: TypedContractEvent<MintedToTreasuryEvent.InputTuple, MintedToTreasuryEvent.OutputTuple, MintedToTreasuryEvent.OutputObject>;
-
+    
 
       'RebalanceStableBorrowRate(address,address)': TypedContractEvent<RebalanceStableBorrowRateEvent.InputTuple, RebalanceStableBorrowRateEvent.OutputTuple, RebalanceStableBorrowRateEvent.OutputObject>;
       RebalanceStableBorrowRate: TypedContractEvent<RebalanceStableBorrowRateEvent.InputTuple, RebalanceStableBorrowRateEvent.OutputTuple, RebalanceStableBorrowRateEvent.OutputObject>;
-
+    
 
       'Repay(address,address,address,uint256,bool)': TypedContractEvent<RepayEvent.InputTuple, RepayEvent.OutputTuple, RepayEvent.OutputObject>;
       Repay: TypedContractEvent<RepayEvent.InputTuple, RepayEvent.OutputTuple, RepayEvent.OutputObject>;
-
+    
 
       'ReserveDataUpdated(address,uint256,uint256,uint256,uint256,uint256)': TypedContractEvent<ReserveDataUpdatedEvent.InputTuple, ReserveDataUpdatedEvent.OutputTuple, ReserveDataUpdatedEvent.OutputObject>;
       ReserveDataUpdated: TypedContractEvent<ReserveDataUpdatedEvent.InputTuple, ReserveDataUpdatedEvent.OutputTuple, ReserveDataUpdatedEvent.OutputObject>;
-
+    
 
       'ReserveUsedAsCollateralDisabled(address,address)': TypedContractEvent<ReserveUsedAsCollateralDisabledEvent.InputTuple, ReserveUsedAsCollateralDisabledEvent.OutputTuple, ReserveUsedAsCollateralDisabledEvent.OutputObject>;
       ReserveUsedAsCollateralDisabled: TypedContractEvent<ReserveUsedAsCollateralDisabledEvent.InputTuple, ReserveUsedAsCollateralDisabledEvent.OutputTuple, ReserveUsedAsCollateralDisabledEvent.OutputObject>;
-
+    
 
       'ReserveUsedAsCollateralEnabled(address,address)': TypedContractEvent<ReserveUsedAsCollateralEnabledEvent.InputTuple, ReserveUsedAsCollateralEnabledEvent.OutputTuple, ReserveUsedAsCollateralEnabledEvent.OutputObject>;
       ReserveUsedAsCollateralEnabled: TypedContractEvent<ReserveUsedAsCollateralEnabledEvent.InputTuple, ReserveUsedAsCollateralEnabledEvent.OutputTuple, ReserveUsedAsCollateralEnabledEvent.OutputObject>;
-
+    
 
       'Supply(address,address,address,uint256,uint16)': TypedContractEvent<SupplyEvent.InputTuple, SupplyEvent.OutputTuple, SupplyEvent.OutputObject>;
       Supply: TypedContractEvent<SupplyEvent.InputTuple, SupplyEvent.OutputTuple, SupplyEvent.OutputObject>;
-
+    
 
       'SwapBorrowRateMode(address,address,uint8)': TypedContractEvent<SwapBorrowRateModeEvent.InputTuple, SwapBorrowRateModeEvent.OutputTuple, SwapBorrowRateModeEvent.OutputObject>;
       SwapBorrowRateMode: TypedContractEvent<SwapBorrowRateModeEvent.InputTuple, SwapBorrowRateModeEvent.OutputTuple, SwapBorrowRateModeEvent.OutputObject>;
-
+    
 
       'UserEModeSet(address,uint8)': TypedContractEvent<UserEModeSetEvent.InputTuple, UserEModeSetEvent.OutputTuple, UserEModeSetEvent.OutputObject>;
       UserEModeSet: TypedContractEvent<UserEModeSetEvent.InputTuple, UserEModeSetEvent.OutputTuple, UserEModeSetEvent.OutputObject>;
-
+    
 
       'Withdraw(address,address,address,uint256)': TypedContractEvent<WithdrawEvent.InputTuple, WithdrawEvent.OutputTuple, WithdrawEvent.OutputObject>;
       Withdraw: TypedContractEvent<WithdrawEvent.InputTuple, WithdrawEvent.OutputTuple, WithdrawEvent.OutputObject>;
-
+    
     };
   }

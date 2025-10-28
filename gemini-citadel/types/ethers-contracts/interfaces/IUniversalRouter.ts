@@ -3,28 +3,28 @@
 /* eslint-disable */
 import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, ContractRunner, ContractMethod, Listener } from "ethers"
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedListener, TypedContractMethod } from "../common.js"
-
+  
 
   export interface IUniversalRouterInterface extends Interface {
     getFunction(nameOrSignature: "execute"): FunctionFragment;
 
-
+    
 
     encodeFunctionData(functionFragment: 'execute', values: [BytesLike, BytesLike[], BigNumberish]): string;
 
     decodeFunctionResult(functionFragment: 'execute', data: BytesLike): Result;
   }
 
-
+  
 
   export interface IUniversalRouter extends BaseContract {
-
+    
     connect(runner?: ContractRunner | null): IUniversalRouter;
     waitForDeployment(): Promise<this>;
 
     interface: IUniversalRouterInterface;
 
-
+    
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
@@ -38,7 +38,7 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
 
   on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   on<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
-
+  
   once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>
   once<TCEvent extends TypedContractEvent>(filter: TypedDeferredTopicFilter<TCEvent>, listener: TypedListener<TCEvent>): Promise<this>
 
@@ -49,14 +49,14 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>
 
 
-
-
+    
+    
     execute: TypedContractMethod<
       [commands: BytesLike, inputs: BytesLike[], deadline: BigNumberish, ],
       [void],
       'payable'
     >
-
+    
 
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
@@ -67,9 +67,9 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
       'payable'
     >;
 
-
+    
 
     filters: {
-
+      
     };
   }
