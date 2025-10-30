@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { CoinbaseConfig } from './coinbase.config';
 import { dexConfig } from './dex.config';
+import { DEXRegistry } from '../dex/DEXRegistry';
 import * as Validators from '../utils/configValidators';
 import logger from '../services/logger.service';
 
@@ -32,6 +33,7 @@ export interface BotConfig {
     rpcUrl: string;
   };
   dex: typeof dexConfig;
+  dexRegistry: DEXRegistry;
 }
 
 const rpcUrls = Validators.validateRpcUrls(process.env.RPC_URL, 'RPC_URL');
@@ -84,4 +86,5 @@ export const botConfig: BotConfig = {
     rpcUrl: rpcUrls[0],
   },
   dex: dexConfig,
+  dexRegistry: new DEXRegistry(rpcUrls[0]),
 };

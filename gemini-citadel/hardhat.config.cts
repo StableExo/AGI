@@ -1,10 +1,10 @@
-// hardhat.config.ts
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "@nomicfoundation/hardhat-ignition-ethers";
-import "dotenv/config";
+// hardhat.config.cts
+const { HardhatUserConfig } = require("hardhat/config");
+require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-ignition-ethers");
+require("dotenv/config");
 
-const config: HardhatUserConfig = {
+const config: typeof HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
@@ -33,4 +33,4 @@ const config: HardhatUserConfig = {
   }
 };
 
-export default config;
+module.exports = config;
