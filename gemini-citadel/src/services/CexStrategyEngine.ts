@@ -75,8 +75,8 @@ export class CexStrategyEngine {
         if (profit1 > 0) {
           const buyAction: ITradeAction = { action: 'BUY', exchange: tickerB.exchange, pair: tickerB.symbol, price: tickerB.ask.price, amount: 1 };
           const sellAction: ITradeAction = { action: 'SELL', exchange: tickerA.exchange, pair: tickerA.symbol, price: tickerA.bid.price, amount: 1 };
-          const opportunity = new ArbitrageOpportunity(profit1, [buyAction, sellAction]);
-          logger.info(`[CexStrategyEngine] Found opportunity: ${JSON.stringify(opportunity)}`);
+          const opportunity = new ArbitrageOpportunity(BigInt(Math.trunc(profit1)), [buyAction, sellAction]);
+          logger.info(`[CexStrategyEngine] Found opportunity: ${JSON.stringify({...opportunity, profit: opportunity.profit.toString()})}`);
           await this.executionManager.executeCexTrade(opportunity);
         }
 
@@ -85,8 +85,8 @@ export class CexStrategyEngine {
         if (profit2 > 0) {
           const buyAction: ITradeAction = { action: 'BUY', exchange: tickerA.exchange, pair: tickerA.symbol, price: tickerA.ask.price, amount: 1 };
           const sellAction: ITradeAction = { action: 'SELL', exchange: tickerB.exchange, pair: tickerB.symbol, price: tickerB.bid.price, amount: 1 };
-          const opportunity = new ArbitrageOpportunity(profit2, [buyAction, sellAction]);
-          logger.info(`[CexStrategyEngine] Found opportunity: ${JSON.stringify(opportunity)}`);
+          const opportunity = new ArbitrageOpportunity(BigInt(Math.trunc(profit2)), [buyAction, sellAction]);
+          logger.info(`[CexStrategyEngine] Found opportunity: ${JSON.stringify({...opportunity, profit: opportunity.profit.toString()})}`);
           await this.executionManager.executeCexTrade(opportunity);
         }
       }
