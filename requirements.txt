@@ -11,3 +11,5 @@ pytest
 numpy
 faiss-cpu
 sentence-transformers
+web3>=6.0.0
+aiohttp>=3.9.4
