@@ -7,9 +7,14 @@ and make decisions about transaction timing.
 
 import asyncio
 import logging
-from web3 import Web3
+import sys
+import os
 
-from gas_monitor import GasMonitor
+# Add parent directory to path to enable imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from web3 import Web3
+from src.gas_optimization.gas_monitor import GasMonitor
 
 # Configure logging to see what's happening
 logging.basicConfig(

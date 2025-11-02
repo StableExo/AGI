@@ -86,6 +86,7 @@ class GasMonitor:
             raise RuntimeError("Gas monitoring is already active")
         
         self.is_monitoring = True
+        self._monitor_task = asyncio.current_task()
         logger.info("Starting gas price monitoring")
         
         try:
@@ -115,6 +116,7 @@ class GasMonitor:
             raise
         finally:
             self.is_monitoring = False
+            self._monitor_task = None
     
     async def stop_monitoring(self) -> None:
         """
@@ -233,7 +235,8 @@ class GasMonitor:
             return None
         
         # Calculate average (prices are in Wei)
-        avg_price = sum(price for _, price in recent_prices) // len(recent_prices)
+        # Use regular division for better precision, then convert to int
+        avg_price = int(sum(price for _, price in recent_prices) / len(recent_prices))
         
         logger.debug(
             f"Average gas price over {len(recent_prices)} readings: "
